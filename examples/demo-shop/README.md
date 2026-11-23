@@ -18,6 +18,8 @@ Built-in behaviors for exercises: a limited "database" (`DB_SLOTS`, `DB_MS`) tha
 
 - `checkout.k6.js`: the journey with correlation, content checks, and `smoke`, `concurrent`, `steps`, and `load` scenarios (`k6 run -e SCENARIO=steps checkout.k6.js`).
 - `sample-metrics.py`: samples `/metrics` once per second into a CSV (server-side evidence).
+- `sample-procs.py`: samples CPU once per second for the generator (k6), the target, and the whole machine.
+- `compare-runs.py`: median and range across repeated runs (`compare-runs.py DIR PREFIX N`).
 - `analyze.py`: per-step, per-transaction percentiles and server-side figures from k6 CSV output (`k6 run --out csv=raw.csv ...`), standard library only.
 
 Run the target and the generator on separate machines when you can. On one machine they compete for CPU.

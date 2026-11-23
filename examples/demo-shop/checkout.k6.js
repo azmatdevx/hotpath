@@ -16,7 +16,7 @@ const scenarios = {
   concurrent: { executor: 'per-vu-iterations', vus: 5, iterations: 3 },
   steps: {   // 20 -> 40 -> 60 -> 80 iterations/s; 5-10 s ramp then 50 s hold per step (225 s total)
     executor: 'ramping-arrival-rate', startRate: 1, timeUnit: '1s',
-    preAllocatedVUs: 100, maxVUs: 1500,
+    preAllocatedVUs: Number(__ENV.PREALLOC || 100), maxVUs: 1500,
     stages: [
       { target: 20, duration: '10s' }, { target: 20, duration: '50s' },
       { target: 40, duration: '5s' }, { target: 40, duration: '50s' },

@@ -35,7 +35,7 @@ Per transaction, over the steady-state window:
 - p50, p90, p95, p99, and max, plus min
 - successful requests and failed requests separately
 
-Never average percentiles across transactions or time buckets. Recompute from raw samples. If some responses skipped the work (fast empty results, cached or degraded replies), split latency by check outcome when the data allows, because mixed in they pull percentiles down. A small example using only the Python standard library (adjust column names to the tool; the example uses a JMeter-style CSV with `timeStamp` in milliseconds, `elapsed`, `label`, and `success`):
+Never average percentiles across transactions or time buckets. Recompute from raw samples. If some responses skipped the work (fast empty results, cached or degraded replies), split latency by check outcome when the data allows, because mixed in they pull percentiles down. Splitting by a duration threshold is only a heuristic and misclassifies slow genuine responses, so where you can, record the outcome with each sample (a tag or a separate metric) and split on that. A small example using only the Python standard library (adjust column names to the tool; the example uses a JMeter-style CSV with `timeStamp` in milliseconds, `elapsed`, `label`, and `success`):
 
 ```python
 import csv
