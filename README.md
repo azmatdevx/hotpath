@@ -1,4 +1,4 @@
-# perf-skills
+# hotpath
 
 Open-source skills, instructions, and workflows for performance engineering with AI coding agents.
 
