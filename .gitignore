@@ -1,0 +1,19 @@
+# Captures and results can contain real tokens, sessions, and customer data
+*.har
+*.jtl
+simulation.log
+results/
+reports/
+report/
+summary.json
+
+# Secrets and local config
+.env
+.env.*
+.claude/settings.local.json
+
+# Tooling noise
+*.log
+.DS_Store
+node_modules/
+__pycache__/
