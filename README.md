@@ -87,7 +87,7 @@ skills/<name>/references/       per-tool syntax and gotchas
 skills/perf-mode/playbooks/     multi-step playbooks that chain skills
 instructions/                   CLAUDE.md / AGENTS.md templates (planned)
 workflows/                      workflow notes (planned)
-examples/                       case studies with real numbers (template included); demo-shop is a local target to practice on
+examples/                       case studies with real numbers (template included); demo-shop is a local target to practice on, with a worked case study in demo-shop-case-study
 scripts/validate-skills.py      checks frontmatter, names, TODOs, and committed captures (run in CI)
 ```
 
