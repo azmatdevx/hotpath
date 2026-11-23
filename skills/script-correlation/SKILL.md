@@ -18,7 +18,7 @@ This skill is tool-agnostic. The method is the same everywhere; only the extract
 ## Steps
 
 ### 1. Capture twice
-Record or run the flow two times, as two different users or sessions if possible. Save both as HAR files or request/response logs.
+Record or run the flow two times, as two different users or sessions if possible. Save both as HAR files or request/response logs. Capture requests as well as responses (headers and bodies). A response-only capture shows where values come from but not where they are used, so you cannot tell which later requests carry them.
 
 ### 2. Diff to find dynamic values
 Compare the two captures request by request. Anything that differs and is not user-supplied input is a candidate:

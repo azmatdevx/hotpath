@@ -24,6 +24,7 @@ Gather the raw per-request samples, not only the tool's summary. Typical sources
 - Locust: `--csv` request history and failures
 - Gatling: `simulation.log`
 Also gather monitoring data (CPU, memory, DB, pools, GC, queues) covering the same time window, and the run configuration.
+Raw k6 CSV output has one row per metric sample (`metric_name`, `timestamp` in seconds, `metric_value`, `name`, `status`, `check`), so filter on `metric_name` (for example `http_req_duration`).
 
 ### 2. Define the measurement window
 Mark ramp-up, steady state, and ramp-down. Compute headline numbers from steady state only. Keep the full timeline for the degradation analysis.
@@ -34,21 +35,28 @@ Per transaction, over the steady-state window:
 - p50, p90, p95, p99, and max, plus min
 - successful requests and failed requests separately
 
-Never average percentiles across transactions or time buckets. Recompute from raw samples. A small example for tabular results (adjust column names to the tool):
+Never average percentiles across transactions or time buckets. Recompute from raw samples. If some responses skipped the work (fast empty results, cached or degraded replies), split latency by check outcome when the data allows, because mixed in they pull percentiles down. A small example using only the Python standard library (adjust column names to the tool; the example uses a JMeter-style CSV with `timeStamp` in milliseconds, `elapsed`, `label`, and `success`):
 
 ```python
-import pandas as pd
+import csv
+from collections import defaultdict
 
-df = pd.read_csv("results.csv")           # e.g. JMeter CSV: timeStamp, elapsed, label, success
-start = df.timeStamp.min() + 120_000      # skip first 2 minutes of ramp-up (ms)
-end = df.timeStamp.max() - 60_000         # skip last minute of ramp-down
-w = df[(df.timeStamp >= start) & (df.timeStamp <= end)]
+def pct(v, p):
+    v = sorted(v); k = (len(v) - 1) * p / 100; f = int(k); c = min(f + 1, len(v) - 1)
+    return v[f] + (v[c] - v[f]) * (k - f)
 
-ok = w[w.success.astype(str).str.lower() == "true"]
-summary = ok.groupby("label").elapsed.describe(percentiles=[.5, .9, .95, .99])
-errors = w.groupby("label").success.apply(lambda s: (s.astype(str).str.lower() != "true").mean())
-print(summary, errors, sep="\n\n")
+rows = list(csv.DictReader(open("results.csv")))
+ts = [int(r["timeStamp"]) for r in rows]
+start, end = min(ts) + 120_000, max(ts) - 60_000      # skip 2 min ramp-up and 1 min ramp-down
+by_label = defaultdict(list)
+for r in rows:
+    if start <= int(r["timeStamp"]) <= end and r["success"].lower() == "true":
+        by_label[r["label"]].append(float(r["elapsed"]))
+for label, v in sorted(by_label.items()):
+    print(label, len(v), *(round(pct(v, p)) for p in (50, 90, 95, 99)))
 ```
+
+If pandas is available, `groupby("label").elapsed.describe(percentiles=[.5, .9, .95, .99])` does the same.
 
 ### 4. Triage errors
 Group failures by transaction, status or exception, and time. Ask:
@@ -56,6 +64,7 @@ Group failures by transaction, status or exception, and time. Ask:
 - Are they timeouts, rejections, assertion failures, or connection errors?
 - Do they cluster on one transaction or dependency?
 Errors that appear as load rises usually point to a limit being hit.
+Include content-check failures, not only HTTP errors. A degraded system can return 200 with empty or fake results, so the HTTP error rate can read 0% while the work failed.
 
 ### 5. Read the curves
 Plot over time, on a shared time axis:
@@ -87,6 +96,7 @@ For each finding give: the number with unit and percentile, the load level, the 
 - Reporting averages, or averaging percentiles.
 - Including ramp-up and ramp-down in the headline numbers.
 - Mixing failed and successful requests in one latency figure.
+- Trusting a 0% HTTP error rate without checking content-check failures.
 - Reading the tool's summary without checking the raw data.
 - Naming a bottleneck with no server-side evidence.
 - Comparing runs where more than one thing changed.

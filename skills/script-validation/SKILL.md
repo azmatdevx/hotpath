@@ -28,6 +28,8 @@ For each step in the flow, confirm the response is the right one:
 
 Add these as assertions or checks in the script, so a wrong response fails the request.
 
+Then prove the assertions can fail. Break something on purpose (send a wrong token or a stale CSRF value, or point at a stub that returns status 200 with an empty result) and confirm the script reports failures and, in a headless run, exits with a failing status. An assertion that has never failed is untested.
+
 ### 3. Check correlation and data
 - Every dynamic value is extracted from a response, and none is hard-coded (see `script-correlation`).
 - Extraction fails visibly when the value is missing.
@@ -67,10 +69,12 @@ Write down the exact command, the tool version, the data used, and what the sing
 - Skipping the second iteration, which hides single-use values.
 - Validating with one user only, which hides shared state and collisions.
 - Letting a failed assertion pass silently because the tool's default is to continue.
+- Trusting an error rate built only on status codes: a degraded system can return 200 with empty or fake results.
 - Using production accounts or real customer data for validation.
 
 ## Done when
 - A single-user run passes with content assertions on every important step.
+- Each assertion was shown to fail when the response is wrong.
 - A small concurrent run passes with no errors, shared state, or collisions.
 - Server-side evidence confirms the requests and the work happened.
 - Debug overhead is off, and the run command is recorded.
