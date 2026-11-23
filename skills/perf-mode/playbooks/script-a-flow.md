@@ -10,8 +10,9 @@ Goal: a load test script for one user journey that passes a single-user run and 
 4. **Correlate.** Run `script-correlation`: diff the two captures, extract each dynamic value from the response that produces it, and substitute it into later requests.
 5. **Parameterize.** Run `script-parameterization`: supply per-user and per-iteration data (credentials, search terms, IDs) and avoid collisions and cache-friendly repetition.
 6. **Validate.** Run `script-validation`: single user first, then a few concurrent users. Assert on response content, not just status.
-7. **Gate on principles.** Check `principle-validate-before-scale` and `principle-prove-the-work-happened`. If either fails, go back to step 4, 5 or 6.
-8. **Hand off.** Record the command to run the script, the assumptions, and any known gaps (client-side computed values, third-party calls, data limits).
+7. **Review.** Run `script-review` (or `browser-script-review` for a browser script) and fix any blockers and major findings.
+8. **Gate on principles.** Check `principle-validate-before-scale` and `principle-prove-the-work-happened`. If either fails, go back to step 4, 5 or 6.
+9. **Hand off.** Record the command to run the script, the assumptions, and any known gaps (client-side computed values, third-party calls, data limits).
 
 ## Done when
 

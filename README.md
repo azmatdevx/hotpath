@@ -40,6 +40,8 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `script-correlation` | Extracting and substituting dynamic values. |
 | `script-parameterization` | Per-user and per-iteration test data. |
 | `script-validation` | Proving a script is correct before any load. |
+| `script-review` | Reviewing a JMeter, k6, Locust, or Gatling script by severity. |
+| `distributed-load-generation` | Scaling load across generators. |
 
 ### Design, execution, and analysis
 
@@ -50,14 +52,19 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `results-sanity-check` | Nine questions to vet a result before reporting it. |
 | `results-analysis` | Percentiles, curves, errors, and finding the limiter. |
 | `test-report` | Reporting a result to stakeholders. |
+| `capacity-planning` | Sizing from load test evidence, with headroom and redundancy. |
+| `ci-performance-gates` | Automated performance checks in CI/CD. |
+| `observability-setup` | Metrics, traces, and logs ready before the run. |
 
-### Frontend and database
+### Frontend, database, and runtime
 
 | Skill | For |
 |---|---|
 | `browser-script-authoring` | Browser-based flows (Playwright, k6 browser, Puppeteer). |
+| `browser-script-review` | Reviewing browser scripts for flakiness and measurement integrity. |
 | `web-vitals-audit` | LCP, INP, CLS, and waterfall analysis. |
 | `sql-plan-analysis` | Slow queries via execution plans (Postgres, Oracle, SQL Server, MySQL). |
+| `jvm-gc-analysis` | Latency, CPU, and memory problems on JVM services. |
 
 ### Foundations and principles
 
@@ -81,6 +88,7 @@ skills/perf-mode/playbooks/     multi-step playbooks that chain skills
 instructions/                   CLAUDE.md / AGENTS.md templates (planned)
 workflows/                      workflow notes (planned)
 examples/                       case studies with real numbers (template included)
+scripts/validate-skills.py      checks frontmatter, names, TODOs, and committed captures (run in CI)
 ```
 
 ## Works across agents
@@ -109,7 +117,7 @@ Only run load against systems you own or have explicit permission to test, and n
 
 ## Contributing
 
-Keep each skill narrow, with one job. Put the method in `SKILL.md` and tool syntax in `references/`. Back claims with evidence, and add a case study under `examples/` when you can.
+See [CONTRIBUTING.md](CONTRIBUTING.md). Keep each skill narrow, with one job. Put the method in `SKILL.md` and tool syntax in `references/`, back claims with evidence, and run `python3 scripts/validate-skills.py` before opening a pull request.
 
 ## License
 
