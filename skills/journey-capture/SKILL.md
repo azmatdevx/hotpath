@@ -39,6 +39,8 @@ node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-01.js --base http
 
 Use at least 3 runs per cache state. One run cannot separate a real problem from noise.
 
+The script also records lab web vitals after every step into the run record (`vitals`, with the browser's user agent and any CPU slowdown under `conditions`). Add `--cpu-slowdown 4` to throttle the CPU four times (Chromium only) when the question is how a slower device fares, and state it in the results. Summarise vitals with `web-vitals-audit` (`vitals_summary.py`).
+
 The script refuses to overwrite captures that already exist for the same flow, cache state, and run number, so runs from two attempts cannot mix by accident. When you recapture after a failure or a repair, delete the discarded files first (or use a new `--out`); `--overwrite` exists but hides what you replaced.
 
 ### 4. Check every run completed

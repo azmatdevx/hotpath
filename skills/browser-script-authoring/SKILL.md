@@ -15,7 +15,7 @@ This skill is tool-agnostic. Per-tool syntax is in `references/` (`playwright.md
 - The page computes values in JavaScript that a protocol-level script cannot reproduce.
 - You need a user-experience measurement while backend load runs at the same time.
 
-Do not use a browser to generate large load. Browsers are expensive per user. Generate scale at protocol level (see `script-authoring`) and use a few browsers for experience measurements.
+Do not use a browser to generate large load. Browsers are expensive per user. Generate scale at protocol level (see script-authoring, if the load-testing skills are installed) and use a few browsers for experience measurements.
 
 ## Steps
 

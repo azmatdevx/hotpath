@@ -1,11 +1,12 @@
-# journey-sweep demo
+# sweep demo
 
-A small web app with planted performance problems, a markdown test case, and a flow for it. It exists to try the `journey-sweep` skills end to end and to show what they produce.
+A small web app with planted performance problems, a markdown test case, and a flow for it. It exists to try the sweep-mode skills end to end and to show what they produce.
 
 ## Files
 - `server.js`: the app (port 3918). Planted: three concurrent calls to the same API, a 1.5 s API, a 1.2 MB uncompressed JSON list, a 400 KB uncompressed and uncacheable script, a 900 KB image, eight item calls one by one (N+1), a failing call, a two-hop redirect, and a poll every 1.5 s. Control: a small gzip-compressed script with a fingerprinted name and long-lived cache headers, which must not be flagged.
 - `journeys/01-view-orders.md`: the test case, in the markdown shape the skills read.
 - `flows/01-view-orders.js`: the flow written from it, with a `verify` check on the end state.
+- `journeys/03-promo-page.md` and `flows/03-promo-page.js`: a page with planted web vitals problems (`/promo` in `server.js`): a hero image delayed 3 s (LCP), a banner injected above the content at 1 s (CLS), a 500 ms blocking script (TBT), and a click handler that blocks for 400 ms (interaction latency).
 - `walks/02-refresh-orders.jsonl` and `flows/02-refresh-orders.from-cli.js`: a walk of `TC-02` recorded with `playwright-cli`, and the flow `cli_to_flow.py` built from it.
 - `repairs.md`: the repair log from the test of `flow-repair`.
 - `journeys/02-refresh-orders.md` and `flows/02-refresh-orders.js`: a journey that clicks a button whose id and class change on every page load.
@@ -15,7 +16,7 @@ A small web app with planted performance problems, a markdown test case, and a f
 npm i playwright && npx playwright install chromium     # once, outside this repo or in a scratch directory
 node server.js &
 cd ../.. && node skills/journey-capture/scripts/capture-playwright.js \
-  --flow examples/journey-sweep-demo/flows/01-view-orders.js --base http://localhost:3918 \
+  --flow examples/sweep-demo/flows/01-view-orders.js --base http://localhost:3918 \
   --runs 3 --cache cold --out captures/                 # captures/ is ignored by git
 python3 skills/har-analysis/scripts/compare_runs.py --journey tc-01-cold --json tc-01-cold.json captures/*-cold-run*.har
 python3 skills/sweep-rollup/scripts/rollup.py tc-01-cold.json
@@ -37,6 +38,24 @@ On a real Chromium HAR (Playwright 1.49, 3 cold runs, then 3 warm runs), every p
 | `polling` on `/api/notifications` (every 1.5 s) | 3/3 | 3/3 |
 
 The image disappearing when warm, while the script with no cache headers stays, is the cache-state difference the capture skill asks you to record.
+
+## Web vitals
+`TC-03` was captured 3 times cold (Playwright 1.49, Chromium 131 headless, no throttling, a laptop that was not idle) and summarised with `vitals_summary.py`:
+
+| Metric | Median | Range over 3 runs | Limit | Planted |
+|---|---|---|---|---|
+| LCP | 3030 ms | 3028-3082 ms | 2500 ms | a 3 s image delay |
+| CLS | 0.2 | 0.2-0.2 | 0.1 | a 260 px banner at 1 s |
+| Slowest interaction | 432 ms | 424-440 ms | 200 ms | a 400 ms click handler |
+| TBT | 799 ms | 799-802 ms | 200 ms | 450 ms + 350 ms of long tasks |
+| TTFB | 2 ms | 1-29 ms | 800 ms | none (control) |
+
+All four planted problems were over their limit in 3 of 3 runs, and the control was not flagged. Building this exposed three mistakes in my first attempt, all fixed:
+- A 1x1 PNG as the hero image never counted for LCP, because Chrome leaves out low-entropy images. The demo now serves a noise image.
+- The slow interaction was missed at first. The browser reports an interaction's timing only after the next paint, so the capture now takes one final reading with a 400 ms settle after the last step.
+- The first banner was too small to push CLS over its limit.
+
+These are lab values from one machine; they show the capture and summary work, not what real users would see.
 
 ## Dynamic ids and failed steps
 The Refresh orders button gets a new random id on every load. Three flows for `TC-02` were run once each (cold) on Playwright 1.49:

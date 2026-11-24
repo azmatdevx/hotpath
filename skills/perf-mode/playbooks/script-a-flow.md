@@ -44,7 +44,7 @@ What the script covers, the command to run it, the validation evidence (the runs
 
 ## Related playbooks
 
-`new-load-test` (this is its step 5), `journey-sweep` (the same flow, for finding problems instead of load).
+`new-load-test` (this is its step 5), `sweep-mode` (the same flow run once for a user-experience check, instead of load).
 
 ## Done when
 

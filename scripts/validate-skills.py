@@ -54,41 +54,83 @@ for md in sorted(SKILLS.rglob("*.md")):
         if not (SKILLS / m.group(1) / m.group(2)).exists():
             errors.append(f"{md.relative_to(ROOT)}: <skills-dir>/{m.group(1)}/{m.group(2)} does not exist")
 
-# perf-mode: the router and every playbook keep the same structure
-PERF = SKILLS / "perf-mode"
-PLAYBOOKS = PERF / "playbooks"
+# modes (perf-mode, sweep-mode): the router and every playbook keep the same structure
+MODES = ["perf-mode", "sweep-mode"]
 ROUTER_SECTIONS = ["## Start here (hard rule)", "## Non-negotiables", "## Principles", "## Autonomy",
                    "## Delegation", "## Reply format", "## Playbooks"]
 PLAYBOOK_SECTIONS = ["## Inputs", "## Steps", "## Verification", "## Stop conditions", "## Delegation",
                      "## Reply format", "## Related playbooks", "## Done when"]
-if PERF.exists():
-    router = (PERF / "SKILL.md").read_text(encoding="utf-8")
+known = {p.name for p in SKILLS.iterdir() if p.is_dir()}
+SKILL_PREFIXES = {"script", "principle", "results", "load", "browser", "flow", "journey", "sweep", "perf", "har",
+                  "web", "repair", "review"}
+
+
+def block(text, name):
+    m = re.search(rf"<!-- {name}:start -->(.*?)<!-- {name}:end -->", text, re.S)
+    return m.group(1).strip() if m else None
+
+
+mode_texts = {}
+principles_listed = set()
+for mode in MODES:
+    base = SKILLS / mode
+    if not base.exists():
+        continue
+    router = (base / "SKILL.md").read_text(encoding="utf-8")
+    mode_texts[mode] = (router, (base / "worker.md").read_text(encoding="utf-8") if (base / "worker.md").exists() else "")
     for h in ROUTER_SECTIONS:
         if h not in router:
-            errors.append(f"skills/perf-mode/SKILL.md: missing section '{h}'")
-    if not (PERF / "worker.md").exists():
-        errors.append("skills/perf-mode/worker.md is missing")
-    for principle in sorted(p.name for p in SKILLS.glob("principle-*") if p.is_dir()):
-        if f"`{principle}`" not in router:
-            errors.append(f"skills/perf-mode/SKILL.md: principle '{principle}' is not listed")
-    known = {p.name for p in SKILLS.iterdir() if p.is_dir()}
+            errors.append(f"skills/{mode}/SKILL.md: missing section '{h}'")
+    if not (base / "worker.md").exists():
+        errors.append(f"skills/{mode}/worker.md is missing")
+    principles_listed |= set(re.findall(r"`(principle-[a-z0-9-]+)`", router))
+    playbooks = base / "playbooks"
     listed = set(re.findall(r"\(playbooks/([a-z0-9-]+)\.md\)", router))
-    on_disk = {p.stem for p in PLAYBOOKS.glob("*.md") if not p.name.startswith("_")}
+    on_disk = {p.stem for p in playbooks.glob("*.md")} if playbooks.exists() else set()
     for name in sorted(on_disk - listed):
-        errors.append(f"skills/perf-mode/SKILL.md: playbook '{name}' is not in the table")
+        errors.append(f"skills/{mode}/SKILL.md: playbook '{name}' is not in the table")
     for name in sorted(listed - on_disk):
-        errors.append(f"skills/perf-mode/SKILL.md: table links playbooks/{name}.md, which does not exist")
+        errors.append(f"skills/{mode}/SKILL.md: table links playbooks/{name}.md, which does not exist")
     for name in sorted(on_disk):
-        text = (PLAYBOOKS / f"{name}.md").read_text(encoding="utf-8")
+        text = (playbooks / f"{name}.md").read_text(encoding="utf-8")
         if not text.startswith("# Playbook:"):
-            errors.append(f"playbooks/{name}.md: must start with '# Playbook:'")
+            errors.append(f"{mode}/playbooks/{name}.md: must start with '# Playbook:'")
         for h in PLAYBOOK_SECTIONS:
             if h not in text:
-                errors.append(f"playbooks/{name}.md: missing section '{h}'")
+                errors.append(f"{mode}/playbooks/{name}.md: missing section '{h}'")
         for token in re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`", text):
-            if token.split("-")[0] in {"script", "principle", "results", "load", "browser", "flow", "journey",
-                                       "sweep", "perf", "har"} and token not in known | on_disk:
-                errors.append(f"playbooks/{name}.md: '{token}' is not a skill or playbook")
+            if token.split("-")[0] in SKILL_PREFIXES and token not in known | on_disk:
+                errors.append(f"{mode}/playbooks/{name}.md: '{token}' is not a skill or playbook")
+
+for principle in sorted(p.name for p in SKILLS.glob("principle-*") if p.is_dir()):
+    if principle not in principles_listed:
+        errors.append(f"principle '{principle}' is not listed by any mode")
+
+# the hard rule and the worker core are the same text in every mode
+for marker, idx in (("hard-rule", 0), ("worker-core", 1)):
+    texts = {m: block(t[idx], marker) for m, t in mode_texts.items()}
+    for m, t in texts.items():
+        if t is None:
+            errors.append(f"skills/{m}: missing <!-- {marker}:start/end --> block")
+    present = {t for t in texts.values() if t}
+    if len(present) > 1:
+        errors.append(f"the {marker} block differs between modes: " + ", ".join(sorted(texts)))
+
+# packs: every name is a skill, and a pack is self-contained
+PACKS = ROOT / "packs"
+if PACKS.exists():
+    for pack in sorted(PACKS.glob("*.txt")):
+        names = [l.strip() for l in pack.read_text(encoding="utf-8").splitlines() if l.strip()]
+        for n in names:
+            if n not in known:
+                errors.append(f"{pack.relative_to(ROOT)}: '{n}' is not a skill")
+        for n in names:
+            if n not in known:
+                continue
+            for md in (SKILLS / n).rglob("*.md"):
+                for token in set(re.findall(r"`([a-z0-9]+(?:-[a-z0-9]+)+)`", md.read_text(encoding="utf-8"))):
+                    if token in known and token not in names:
+                        errors.append(f"{pack.relative_to(ROOT)}: {md.relative_to(ROOT)} names '{token}', which is not in the pack")
 
 for path in ROOT.rglob("*"):
     if ".git" in path.parts:

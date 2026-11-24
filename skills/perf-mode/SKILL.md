@@ -1,14 +1,15 @@
 ---
 name: perf-mode
-description: Use at the start of any performance testing or performance engineering task (scripting a flow, designing or running a load test, analysing results, reviewing a set of user journeys, and similar). Restates the goal and the target environment first, applies the non-negotiable rules, matches the task to a playbook, and runs the other hotpath skills as each step needs them.
+description: Use at the start of any load testing or performance engineering task (scripting a flow, designing a load test, analysing results, and similar). For a single-user, frontend user-experience check of journeys, use sweep-mode instead. Restates the goal and the target environment first, applies the non-negotiable rules, matches the task to a playbook, and runs the other hotpath skills as each step needs them.
 ---
 
 # perf-mode
 
-The entry point for hotpath. It makes sure the work starts from a stated goal and a confirmed target, applies the rules that cannot be skipped, picks a playbook, and ends with evidence instead of a summary of activity.
+The entry point for load testing in hotpath. For a single-user, frontend user-experience check of user journeys (duplicate requests, payload sizes, web vitals), use `sweep-mode` instead; it is a separate mode with its own playbooks. This mode makes sure the work starts from a stated goal and a confirmed target, applies the rules that cannot be skipped, picks a playbook, and ends with evidence instead of a summary of activity.
 
 This skill is agent-neutral. It assumes only that you can read files, edit files, and run shell commands. Bundled skills live at `<skills-dir>/<name>/SKILL.md` (the folder the skills were installed in); scripts named by a skill are in that skill's own `scripts/` folder, so use the path the skill was loaded from, not the current directory.
 
+<!-- hard-rule:start -->
 ## Start here (hard rule)
 
 Before any tool call that touches a target, restate in your first reply, in this order:
@@ -21,6 +22,7 @@ Before any tool call that touches a target, restate in your first reply, in this
 Then wait for a correction or a go-ahead only if something in 1 to 4 is unknown or looks wrong. If all four are clear, say so and proceed.
 
 No load, capture, script run, or measurement goes to a target until 2 and 3 are stated. A user's earlier instruction for a different task does not cover this one. Production is never a target unless the user names it for this task.
+<!-- hard-rule:end -->
 
 ## Non-negotiables
 
@@ -35,7 +37,6 @@ Each trigger is a required action, not a suggestion. Each reply names the princi
 | You compare two runs or configurations | Change one thing between them (`principle-one-variable-at-a-time`) |
 | You design a workload | Base it on real user behaviour (`principle-model-real-users`) |
 | A HAR, capture, or result file exists | Keep it out of version control, and mask secrets before it goes anywhere |
-| You write a bug or finding for a tracker | Produce drafts with `perf-bug-writing`. You never file, comment on, or close a ticket |
 | A run will outlast your attention or session | Write the stop conditions and artifact location before starting, and do not start it if nothing will watch them |
 | You start a subagent | Its kickoff begins with the line "Read `<skills-dir>/perf-mode/worker.md` before anything else" |
 
@@ -94,13 +95,12 @@ The lead owns the result and reads the numbers itself. Workers do the independen
 
 ## Playbooks
 
-Match the task to one playbook, copy its steps into a task list (your agent's todo tool, or a checklist in your reply), and keep it updated. If two fit, take the one that covers the end goal and say which. If none fits, say so, then work from the non-negotiables and the individual skills.
+Match the task to one playbook, copy its steps into a task list (your agent's todo tool, or a checklist in your reply), and keep it updated. If two fit, take the one that covers the end goal and say which. If a skill a playbook names is not installed, say so and stop that playbook; do not improvise its method. If none fits, say so, then work from the non-negotiables and the individual skills.
 
 | Playbook | For |
 |---|---|
 | [script-a-flow](playbooks/script-a-flow.md) | Turn a user journey into a working, validated load test script in any tool. |
 | [new-load-test](playbooks/new-load-test.md) | Plan, build, run, and report a load test end to end. |
 | [results-to-report](playbooks/results-to-report.md) | Take completed run results, vet them, analyse them, and write them up. |
-| [journey-sweep](playbooks/journey-sweep.md) | Run a set of manual test cases as browser flows, capture HARs, find performance problems, and draft the bugs. |
 
-Every playbook has the same sections: an ownership preamble, inputs, steps, verification, stop conditions, delegation, a reply format, related playbooks, and what done means. `playbooks/_template.md` is the template for new ones.
+Every playbook has the same sections: an ownership preamble, inputs, steps, verification, stop conditions, delegation, a reply format, related playbooks, and what done means. `docs/playbook-template.md` in the repository is the template for new ones.

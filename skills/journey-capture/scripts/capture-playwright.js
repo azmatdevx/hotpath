@@ -4,6 +4,7 @@
 // usage: node capture-playwright.js --flow flows/01.js --base http://localhost:3918 --runs 3 --cache cold --out captures/
 //   --cache cold   fresh browser profile for every run (empty cache)
 //   --cache warm   a priming pass first, then the measured pass in the same profile (populated cache)
+//   --cpu-slowdown N   throttle the CPU N times (Chromium only); recorded in the run record
 //   --overwrite    replace existing captures with the same name; without it the script refuses, so runs from
 //                  different attempts cannot be mixed by accident. Delete discarded captures instead where you can.
 // Needs the `playwright` package and a browser (npm i playwright; npx playwright install chromium).
@@ -24,6 +25,7 @@ try {
   process.exit(2);
 }
 const { createFinder } = require('./locate');
+const vitals = require('./vitals');
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const flowPath = path.resolve(arg('flow'));
@@ -31,6 +33,7 @@ const base = arg('base');
 const runs = Number(arg('runs', 3));
 const cache = arg('cache', 'cold');
 const out = path.resolve(arg('out', 'captures'));
+const cpuSlowdown = Number(arg('cpu-slowdown', 1));
 if (!flowPath || !base || !['cold', 'warm'].includes(cache)) {
   console.error('usage: capture-playwright.js --flow F --base URL [--runs 3] [--cache cold|warm] [--out DIR]');
   process.exit(2);
@@ -56,12 +59,24 @@ async function walk(page, meta, tag) {
   const find = createFinder(page, usage);
   for (const [name, fn] of flow.steps) {
     const t = Date.now();
-    try { await fn(page, base, find); record.push({ name, ok: true, ms: Date.now() - t }); }
+    try {
+      await fn(page, base, find);
+      record.push({ name, ok: true, ms: Date.now() - t });
+      if (meta) {   // lab vitals as the page stands after this step; the summary keeps the latest per page
+        const v = await vitals.collect(page);
+        if (v) (meta.vitals = meta.vitals || []).push({ step: name, ...v });
+      }
+    }
     catch (e) {
       record.push({ name, ok: false, ms: Date.now() - t, error: String(e.message).split('\n')[0] });
       if (meta) await writeFailureBundle(page, meta, tag, name, e);
       break;
     }
+  }
+  if (meta && record.length && record.every((r) => r.ok)) {
+    // a final reading with a settle, so slow interactions (reported after the next paint) are included
+    const v = await vitals.collect(page, 400);
+    if (v) (meta.vitals = meta.vitals || []).push({ step: '(end of journey)', ...v });
   }
   if (meta) meta.locators = usage;
   return record;
@@ -97,7 +112,13 @@ async function writeFailureBundle(page, meta, tag, step, err) {
         ctx = await browser.newContext({ recordHar: { path: har, content: 'omit' } });
         ctx._sweepBrowser = browser;
       }
+      await ctx.addInitScript(vitals.init);
       const page = await ctx.newPage();
+      if (cpuSlowdown > 1) {
+        const cdp = await ctx.newCDPSession(page);
+        await cdp.send('Emulation.setCPUThrottlingRate', { rate: cpuSlowdown });
+      }
+      meta.conditions = { cpuSlowdown, userAgent: await page.evaluate(() => navigator.userAgent) };
       meta.steps = await walk(page, meta, tag);
       meta.drifted = (meta.locators || []).some((l) => l.drifted);
       if (meta.steps.every((s) => s.ok)) {

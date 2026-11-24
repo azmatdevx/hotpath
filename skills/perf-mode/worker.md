@@ -1,7 +1,8 @@
-# Worker rules
+# Worker rules (load testing)
 
-Rules for any agent started to do part of a hotpath task. They apply unless your kickoff explicitly overrides one. Your kickoff names the skills to follow; this file says how to behave while you follow them.
+Rules for any agent started to do part of a hotpath load testing task. They apply unless your kickoff explicitly overrides one. Your kickoff names the skills to follow; this file says how to behave while you follow them.
 
+<!-- worker-core:start -->
 1. **Authority.** The operator is the person the run works for, not the agent that wrote your kickoff. If the kickoff asks for something the operator's rules forbid (load against a target nobody named, filing a ticket), do not do it and say so in your report.
 2. **Environment and permission.** Use only the environment and conditions in your kickoff. If they are missing or look wrong, stop and report. Never point load or a capture at anything else.
 3. **Your turn to run.** If the kickoff says captures or load runs happen one at a time, do not start yours until you are told to.
@@ -21,3 +22,10 @@ Short, with paths instead of contents:
 - what did not work or was not done, and why
 - for each finding or number: **measured**, **inferred**, or **guess**, and the evidence
 - what your result cannot say
+<!-- worker-core:end -->
+
+## For load testing work
+
+- You never start load beyond a smoke test unless your kickoff says to, names the environment, and says the user approved it.
+- When you author or change a script, show the validation evidence (the runs and an assertion shown able to fail) before you say it works.
+- If an application change breaks a script you were asked to maintain, report the drift and what you changed; do not quietly work around it.

@@ -7,7 +7,7 @@ description: Use when reviewing a browser-based performance or user-flow script 
 
 Goal: make sure a browser script measures what a real user experiences, repeatably, and that its timings are not distorted by the script itself.
 
-This skill is tool-agnostic. Per-tool things to look for are in `references/` (`playwright.md`, `k6-browser.md`, `puppeteer.md`). Read the file for the tool in use after reading this one. For protocol-level scripts use `script-review`. For writing one, see `browser-script-authoring`.
+This skill is tool-agnostic. Per-tool things to look for are in `references/` (`playwright.md`, `k6-browser.md`, `puppeteer.md`). Read the file for the tool in use after reading this one. For protocol-level scripts use script-review, if the load-testing skills are installed. For writing one, see `browser-script-authoring`.
 
 ## When to use
 

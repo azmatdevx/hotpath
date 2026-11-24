@@ -7,7 +7,7 @@ description: Use when auditing web page performance (LCP, INP, CLS, TTFB, waterf
 
 Goal: find what makes a page feel slow for real users, fix the largest cause first, and prove the improvement.
 
-This skill is tool-agnostic. Per-tool notes are in `references/` (`lighthouse.md`, `webpagetest.md`, `devtools.md`). Read the file for the tool in use after reading this one. For scripted browser flows, see `browser-script-authoring`.
+This skill is tool-agnostic. Per-tool notes are in `references/` (`lighthouse.md`, `webpagetest.md`, `devtools.md`). Read the file for the tool in use after reading this one. For scripted browser flows, see `browser-script-authoring`. `<skill-dir>` below is the folder containing this SKILL.md.
 
 ## When to use
 
@@ -52,7 +52,17 @@ Rank findings by effect on the failing metric and by effort. Fix the biggest cau
 Apply one change, then re-run the same test under the same conditions, several runs, and compare medians (see `principle-one-variable-at-a-time`). Confirm in field data over time where possible, since lab gains do not always show up for real users.
 
 ### 9. Report
-Give before and after numbers per metric with the percentile or median, the conditions, the cause found, the change made, and what remains. Hand the write-up to `test-report`.
+Give before and after numbers per metric with the percentile or median, the conditions, the cause found, the change made, and what remains. Hand the write-up to the test-report skill if it is installed; in a journey sweep the write-up is the bug drafts from `perf-bug-writing`.
+
+## In a journey sweep (scripted, repeatable)
+`journey-capture` records lab vitals after every step (LCP and its element, CLS, FCP, TBT, TTFB, and the slowest interaction as an INP approximation) into each run's record. Summarise them across the runs of a journey:
+
+```
+python3 <skill-dir>/scripts/vitals_summary.py --journey tc-03-cold --json tc-03-vitals.json captures/tc-03-*-cold-run?.json
+```
+It uses the latest reading per page in each run, shows median and range per metric against the limits (Google's "good" values by default; change them with the flags), refuses a run that did not verify, and writes rows that `sweep-rollup` and `perf-bug-writing` read like HAR findings. A metric over its limit in every run is a candidate finding; in some runs it is intermittent.
+
+What these numbers are: one user, headless Chromium, no network throttling unless you set it (`--cpu-slowdown` slows the CPU). They are lab values to compare across runs under the same conditions, not what real users see; field data is the measure of that. The slowest interaction equals INP only when the journey has few interactions. For a page the journey leaves and returns to, only the last reading per page is kept.
 
 ## Pitfalls to avoid
 - Optimising the Lighthouse score instead of real user experience.

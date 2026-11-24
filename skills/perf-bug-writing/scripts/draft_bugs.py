@@ -46,6 +46,11 @@ def headline(r):
     if t == "n-plus-one": return f"{ref.rsplit('/', 1)[0]}/{{id}} is called {num(r, 'count')} times, one per id"
     if t == "polling": return f"{ref} is polled {num(r, 'count')} times"
     if t == "redirect": return f"{ref} redirects {num(r, 'hops')} time(s)"
+    if t == "poor-lcp": return f"{path} Largest Contentful Paint is {num(r, 'lcp_ms', ' ms')}"
+    if t == "poor-cls": return f"{path} shifts layout (CLS {num(r, 'cls')})"
+    if t == "poor-inp": return f"{path} has an interaction taking {num(r, 'inp_ms', ' ms')}"
+    if t == "poor-tbt": return f"{path} blocks the main thread for {num(r, 'tbt_ms', ' ms')}"
+    if t == "slow-ttfb": return f"{path} first byte arrives after {num(r, 'ttfb_ms', ' ms')}"
     if t == "failed-request": return f"{ref} fails"
     return f"{ref}: {t}"
 
@@ -61,11 +66,17 @@ EXPECTED = {
     "polling": "Polling only where intended, at an interval the product accepts, and stopped when not needed.",
     "redirect": "The client requests the final URL directly.",
     "failed-request": "No failed calls on the happy path.",
+    "poor-lcp": "Largest Contentful Paint at or under the limit used (2500 ms is Google's 'good' limit).",
+    "poor-cls": "Cumulative Layout Shift at or under the limit used (0.1 is Google's 'good' limit).",
+    "poor-inp": "No interaction slower than the limit used (200 ms is Google's 'good' limit for INP). This is the slowest interaction seen in the lab, which approximates INP.",
+    "poor-tbt": "Total Blocking Time at or under the limit used (a lab proxy for responsiveness).",
+    "slow-ttfb": "First byte within the limit used (800 ms is the usual 'good' limit).",
 }
 
 
 ORDER = ["failed-request", "slow-request", "duplicate-concurrent", "n-plus-one", "large-payload",
-         "uncompressed", "not-cacheable", "duplicate", "redirect", "polling"]
+         "uncompressed", "not-cacheable", "poor-lcp", "poor-inp", "poor-cls", "poor-tbt", "slow-ttfb",
+         "duplicate", "redirect", "polling"]
 
 
 def group(rows):

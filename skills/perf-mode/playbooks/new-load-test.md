@@ -46,7 +46,7 @@ The verdict first, then the headline number against the SLA with its range acros
 
 ## Related playbooks
 
-`script-a-flow` (step 5), `results-to-report` (step 9), `journey-sweep` (for problems found without load).
+`script-a-flow` (step 5), `results-to-report` (step 9).
 
 ## Done when
 
