@@ -35,7 +35,8 @@ A journey with an unautomatable step is either captured manually for that part o
 ### 4. Write each step
 For every action:
 
-- Find elements by role, label, visible text, or a test id, not by position or generated class names.
+- Find elements by role and accessible name, label, visible text, or a test id, never by position or by an id or class that is generated. Many apps generate ids on every load, and a flow built on them fails on the next run.
+- Use the `find` helper from `journey-capture` for targets that need an action. Give it the target's name from the test case and one or two stable candidates; it requires exactly one visible match and records which candidate matched.
 - Wait for a condition (an element, a response, a URL), never a fixed sleep. A fixed wait is allowed only where the test case asks for settling time, and then it is its own named step.
 - Do the action, then wait for the visible result that proves it happened before the next step.
 
@@ -45,7 +46,10 @@ Turn the expected result into a check that throws when it does not hold, and put
 ### 6. Prove it can fail
 Run the flow once with the expectation deliberately wrong (for example the wrong order count) and confirm `verify` fails. If it still passes, the check proves nothing; fix it.
 
-### 7. Review
+### 7. Expect drift later
+The page will change after this flow is written. When a run fails at a step, use `flow-repair`; do not fix it by hand inside a measured run.
+
+### 8. Review
 Run `browser-script-review` over the flow. Then run it three times and confirm every run verifies. A flow that passes only sometimes is flaky; fix the waits before capturing.
 
 ## Pitfalls to avoid
@@ -55,6 +59,7 @@ Run `browser-script-review` over the flow. Then run it three times and confirm e
 - An end check that only confirms the page loaded.
 - Step names that no longer match the test case, so findings cannot be traced.
 - Putting credentials or tokens in the flow file.
+- Generated ids or classes as locators, which break on the next page load.
 
 ## Done when
 - Every automatable step is a named action using the test case's wording.

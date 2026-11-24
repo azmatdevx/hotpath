@@ -1,5 +1,6 @@
 // Synthetic web app with planted performance problems, to try the journey-sweep skills on.
 // Run: node server.js   (port 3918, override with PORT)
+// The Refresh orders button gets a new random id and class on every page load.
 // Planted: concurrent duplicate calls, a slow API, a huge uncompressed JSON list, an uncompressed and
 // uncacheable script, a large image, N+1 item calls, a failing call, a redirect chain, polling.
 // Control: a small fingerprinted script, gzip-compressed, served with long-lived cache headers (must not be flagged).
@@ -27,10 +28,19 @@ async function main() {
   document.body.dataset.ready = '1';
 }
 main();
+async function refreshOrders() {
+  await j('/api/orders');
+  document.getElementById('orders').textContent = '3 orders (refreshed)';
+}
 `;
-const page = `<!doctype html><html><head><title>Shop</title>
+// The button's id and class change on every page load, as in apps with generated ids.
+const page = () => {
+  const r = crypto.randomBytes(4).toString('hex');
+  return `<!doctype html><html><head><title>Shop</title>
 <script src="/static/vendor.js"></script><script src="/static/app.3f9c1a.js" defer></script></head>
-<body><h1>Orders</h1><img src="/img/hero.png" width="200" alt=""><p id="orders">loading</p></body></html>`;
+<body><h1>Orders</h1><img src="/img/hero.png" width="200" alt=""><p id="orders">loading</p>
+<button id="btn-${r}" class="c-${r}" onclick="refreshOrders()">Refresh orders</button></body></html>`;
+};
 
 function send(res, status, type, body, headers = {}) {
   res.writeHead(status, { 'content-type': type, ...headers });
@@ -40,7 +50,7 @@ function send(res, status, type, body, headers = {}) {
 http.createServer(async (req, res) => {
   const path = req.url.split('?')[0];
   const gz = /gzip/.test(req.headers['accept-encoding'] || '');
-  if (path === '/') return send(res, 200, 'text/html', page, { 'cache-control': 'no-cache' });
+  if (path === '/') return send(res, 200, 'text/html', page(), { 'cache-control': 'no-cache' });
   if (path === '/start') return send(res, 302, 'text/html', '', { location: '/home' });
   if (path === '/home') return send(res, 302, 'text/html', '', { location: '/' });
   if (path === '/static/app.3f9c1a.js')

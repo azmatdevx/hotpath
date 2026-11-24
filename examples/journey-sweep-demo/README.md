@@ -6,6 +6,7 @@ A small web app with planted performance problems, a markdown test case, and a f
 - `server.js`: the app (port 3918). Planted: three concurrent calls to the same API, a 1.5 s API, a 1.2 MB uncompressed JSON list, a 400 KB uncompressed and uncacheable script, a 900 KB image, eight item calls one by one (N+1), a failing call, a two-hop redirect, and a poll every 1.5 s. Control: a small gzip-compressed script with a fingerprinted name and long-lived cache headers, which must not be flagged.
 - `journeys/01-view-orders.md`: the test case, in the markdown shape the skills read.
 - `flows/01-view-orders.js`: the flow written from it, with a `verify` check on the end state.
+- `journeys/02-refresh-orders.md` and `flows/02-refresh-orders.js`: a journey that clicks a button whose id and class change on every page load.
 
 ## Run it
 ```sh
@@ -34,6 +35,17 @@ On a real Chromium HAR (Playwright 1.49, 3 cold runs, then 3 warm runs), every p
 | `polling` on `/api/notifications` (every 1.5 s) | 3/3 | 3/3 |
 
 The image disappearing when warm, while the script with no cache headers stays, is the cache-state difference the capture skill asks you to record.
+
+## Dynamic ids and failed steps
+The Refresh orders button gets a new random id on every load. Three flows for `TC-02` were run once each (cold) on Playwright 1.49:
+
+| Flow | Locator | Result |
+|---|---|---|
+| Stable | `find` with role and accessible name first, text second | verified, primary locator used, no drift |
+| Stale id first | a recorded id (`#btn-1a2b3c4d`) as candidate 0, role and name as candidate 1 | verified, recorded `drifted: true` (candidate 1 used) |
+| Brittle | only the recorded id | failed at the click step, exit 1, and wrote a failure bundle |
+
+The failure bundle's accessibility snapshot showed `button "Refresh orders"`, which is what `flow-repair` needs to find the element by meaning. I did not run an agent through the full repair loop on a live capture; the repaired flow is the stable one above. A flow whose step failed is refused downstream, as with a failed `verify`.
 
 ## What the real HAR taught
 The analyzer's synthetic self-test passed before this run, and the first real HAR still showed three problems with the report, which were fixed:

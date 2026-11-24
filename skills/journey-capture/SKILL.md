@@ -36,14 +36,21 @@ Use at least 3 runs per cache state. One run cannot separate a real problem from
 ### 4. Check every run completed
 The script writes `<flow>-<cache>-runN.json` beside each HAR with the steps reached and whether `verify` passed, and exits non-zero if any run failed. A run that did not verify is not analysed, and `compare_runs.py` refuses its HAR. Fix the flow or the environment and capture again; do not analyse the partial HAR.
 
-### 5. Keep the HARs safe
+### 5. When a step fails
+Do not retry with the flow improvising, and do not let an agent steer the browser during a measured run. The extra latency and the chance of acting on the wrong element make the HAR untrustworthy.
+
+- The script writes `<flow>-<cache>-runN.failure.json`: the failed step, what was tried, the URL and title, and an accessibility snapshot of the page at that moment.
+- Run `flow-repair` between captures, using the bundle and the test case step. It repairs the flow and then you capture again from scratch.
+- A run that verified but used a fallback locator is recorded `drifted: true`. Its HAR is valid, because the flow's own code chose the fallback and the end state was verified. Treat it as a sign to repair the primary locator before the next sweep.
+
+### 6. Keep the HARs safe
 Each HAR contains cookies, authorization headers, and request bodies. The script records no response bodies (`content: omit`), but headers and request data are still there.
 
 - Write captures to a directory that is ignored by git (this repo ignores `*.har`) or to your artifact store.
 - Do not paste a HAR into a ticket. Attach it only to a restricted location.
 - If a HAR must be shared outside the team, redact cookies, authorization headers, and personal data first.
 
-### 6. Hand off
+### 7. Hand off
 Pass the verified HARs to `har-analysis`. Keep the run records; they show how far each run got.
 
 ## Pitfalls to avoid
@@ -52,11 +59,12 @@ Pass the verified HARs to `har-analysis`. Keep the run records; they show how fa
 - Capturing in parallel against one environment.
 - Capturing while a deployment or a load test is running.
 - A single run.
+- Letting the flow or an agent improvise mid-run, then analysing that run.
 - Leaving HARs where they will be committed or shared.
 - Capturing the login in every HAR when the login is not under test.
 
 ## Done when
-- Each HAR has a run record showing the journey verified.
+- Each HAR has a run record showing the journey verified, and any `drifted` runs are noted.
 - There are at least 3 runs for each cache state captured, and each result states which.
 - The build and environment are written down.
 - The HARs are stored somewhere safe, not in version control.

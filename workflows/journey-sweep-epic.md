@@ -25,10 +25,11 @@ Output directory: <path outside version control>
 
 Follow skills flow-from-test-case, journey-capture, and har-analysis for this journey only.
 Do not capture in parallel with other workers; wait for the orchestrator's go-ahead before step 2.
-Return: the journey JSON path, unautomatable steps with reasons, runs that did not verify, and
+Return: the journey JSON path, unautomatable steps with reasons, runs that did not verify, repairs made (from repairs.md), runs recorded as drifted, and
 for each consistent finding whether you judge it real, expected, or unproven, with the reason.
+If a step fails, use skill flow-repair between captures and capture again from scratch; do not repair during a run.
 Do not file bugs. Do not paste HAR contents into your reply.
 ```
 
 ## What this does not replace
-A person still decides which findings matter for the product, signs off the severities, and covers the steps that cannot be automated. Single-user timings show relative problems, not capacity; use the load testing skills for that.
+Repairs are changes to the test, so the reviewer also reads each worker's repair log and checks that a real defect was not repaired into a pass. A person still decides which findings matter for the product, signs off the severities, and covers the steps that cannot be automated. Single-user timings show relative problems, not capacity; use the load testing skills for that.

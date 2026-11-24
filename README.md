@@ -70,6 +70,7 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `perf-bug-writing` | Turn confirmed findings into reproducible, de-duplicated bug reports with a severity rubric. |
 | `flow-from-test-case` | Turn a markdown test case into a named, verifiable browser flow, and list the steps that cannot be automated. |
 | `journey-capture` | Run a flow in a browser and record HARs (cold and warm, repeated, verified to have completed). |
+| `flow-repair` | Repair a flow that failed because the page changed, from the step's intent, without turning a real defect into a pass. |
 | `sweep-rollup` | Merge findings across journeys into one de-duplicated list of problems. |
 | `sql-plan-analysis` | Slow queries via execution plans (Postgres, Oracle, SQL Server, MySQL). |
 | `jvm-gc-analysis` | Latency, CPU, and memory problems on JVM services. |

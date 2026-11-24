@@ -10,7 +10,7 @@ Inputs: the test case files, the base URL of the environment, the thresholds you
 
 1. **Check the inputs.** Confirm the test cases are readable, the environment is the intended one and steady (no deployment or load test), and where HARs will be stored. Note the build.
 2. **Turn each test case into a flow.** Run `flow-from-test-case` for each. Report the steps that cannot be automated and decide with the owner whether to capture those manually or skip. Prove each `verify` can fail.
-3. **Capture.** Run `journey-capture` for each flow: at least 3 runs, cold (and warm where caching matters), one journey at a time. Do not analyse a run that did not verify.
+3. **Capture.** Run `journey-capture` for each flow: at least 3 runs, cold (and warm where caching matters), one journey at a time. Do not analyse a run that did not verify. If a step fails because the page changed, run `flow-repair` between captures, then capture again from scratch; never analyse a run that was repaired or improvised.
 4. **Analyse each journey.** Run `har-analysis` with `compare_runs.py` on each journey's runs. Judge every consistent finding as real, expected, or unproven, with the reason.
 5. **Roll up.** Run `sweep-rollup` across the journeys. Account for any that are missing.
 6. **Write the bugs.** Run `perf-bug-writing` on each ranked problem, de-duplicating against the tracker. A person reviews and files them.

@@ -27,3 +27,18 @@ module.exports = {
 - To reuse a saved login, create a context with `storageState` in a setup script; the capture script does not do this yet, so add it to your flow's first step or extend the script.
 - Network and CPU throttling are not applied. Add them in the script (Chromium only, through a CDP session) if the exercise needs them, and state the profile in the results.
 - A flow that uses a popup or a new tab needs `context.waitForEvent('page')`; `recordHar` is set per context, so pages opened in the same context should land in the same HAR; this was not tested.
+
+## Finding elements: `find`
+Steps receive a third argument, `find`, from `scripts/locate.js`:
+```js
+['Click "Refresh orders"', async (page, base, find) => {
+  const button = await find(['Refresh orders button',
+    (p) => p.getByRole('button', { name: 'Refresh orders' }),
+    (p) => p.getByText('Refresh orders', { exact: true })]);
+  await button.click();
+}],
+```
+- Candidates are tried in order; the first must be found within `timeout` (default 10 s), later ones within `fallbackTimeout` (2 s).
+- A candidate must match exactly one visible element. Two or more is an error, not a pick.
+- The run record gets `locators: [{ target, used, of, drifted }]`; `drifted` is true when a fallback matched.
+- On failure the script writes `<tag>.failure.json` with the step, candidates tried, URL, title, and `ariaSnapshot` (Playwright 1.49 `locator.ariaSnapshot()`).

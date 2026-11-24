@@ -6,13 +6,15 @@
 //   --cache warm   a priming pass first, then the measured pass in the same profile (populated cache)
 // Needs the `playwright` package and a browser (npm i playwright; npx playwright install chromium).
 //
-// A flow module exports { id, steps: [[name, async (page, base) => {}], ...], verify: async (page) => {} }.
+// A flow module exports { id, steps: [[name, async (page, base, find) => {}], ...], verify: async (page) => {} }.
+// `find` resolves an element from ordered candidate locators (see locate.js) and records which one matched.
 // verify must throw unless the journey reached its end state; a run that fails verify is marked failed and
 // its HAR must not be analysed.
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { chromium } = require('playwright');
+const { createFinder } = require('./locate');
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const flowPath = path.resolve(arg('flow'));
@@ -27,14 +29,32 @@ if (!flowPath || !base || !['cold', 'warm'].includes(cache)) {
 const flow = require(flowPath);
 fs.mkdirSync(out, { recursive: true });
 
-async function walk(page) {
+async function walk(page, meta, tag) {
   const record = [];
+  const usage = [];
+  const find = createFinder(page, usage);
   for (const [name, fn] of flow.steps) {
     const t = Date.now();
-    try { await fn(page, base); record.push({ name, ok: true, ms: Date.now() - t }); }
-    catch (e) { record.push({ name, ok: false, ms: Date.now() - t, error: String(e.message).split('\n')[0] }); return record; }
+    try { await fn(page, base, find); record.push({ name, ok: true, ms: Date.now() - t }); }
+    catch (e) {
+      record.push({ name, ok: false, ms: Date.now() - t, error: String(e.message).split('\n')[0] });
+      if (meta) await writeFailureBundle(page, meta, tag, name, e);
+      break;
+    }
   }
+  if (meta) meta.locators = usage;
   return record;
+}
+
+// What an agent (or person) needs to repair a step: the step, what was tried, and what the page shows now.
+// It can contain page text, so keep it with the captures and out of version control.
+async function writeFailureBundle(page, meta, tag, step, err) {
+  const bundle = { flow: flow.id, run: meta.run, cache: meta.cache, step, error: String(err.message).split('\n')[0],
+                   tried: err.tried || [], url: page.url() };
+  try { bundle.title = await page.title(); } catch (e) { /* page may be closed */ }
+  try { bundle.ariaSnapshot = await page.locator('body').ariaSnapshot(); } catch (e) { /* ignore */ }
+  fs.writeFileSync(path.join(out, tag + '.failure.json'), JSON.stringify(bundle, null, 2));
+  meta.failureBundle = tag + '.failure.json';
 }
 
 (async () => {
@@ -48,7 +68,7 @@ async function walk(page) {
     try {
       if (cache === 'warm') {
         const prime = await chromium.launchPersistentContext(profile, { headless: true });
-        await walk(await prime.newPage());
+        await walk(await prime.newPage(), null, tag);
         await prime.close();
         ctx = await chromium.launchPersistentContext(profile, { headless: true, recordHar: { path: har, content: 'omit' } });
       } else {
@@ -57,7 +77,8 @@ async function walk(page) {
         ctx._sweepBrowser = browser;
       }
       const page = await ctx.newPage();
-      meta.steps = await walk(page);
+      meta.steps = await walk(page, meta, tag);
+      meta.drifted = (meta.locators || []).some((l) => l.drifted);
       if (meta.steps.every((s) => s.ok)) {
         try { await flow.verify(page); meta.verified = true; } catch (e) { meta.error = String(e.message).split('\n')[0]; }
       }
@@ -68,7 +89,9 @@ async function walk(page) {
     }
     if (!meta.verified) failed++;
     fs.writeFileSync(path.join(out, tag + '.json'), JSON.stringify(meta, null, 2));
-    console.log(`${tag}: ${meta.verified ? 'verified' : 'FAILED ' + (meta.error || 'a step failed')}`);
+    console.log(`${tag}: ${meta.verified ? 'verified' : 'FAILED ' + (meta.error || meta.steps.filter((x) => !x.ok).map((x) => x.name + ': ' + x.error).join('; ') || 'a step failed')}`
+      + (meta.drifted ? ' (a fallback locator was used: the page has drifted from the flow)' : '')
+      + (meta.failureBundle ? ` -> see ${meta.failureBundle}` : ''));
   }
   process.exit(failed ? 1 : 0);
 })();
