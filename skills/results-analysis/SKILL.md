@@ -27,7 +27,7 @@ Also gather monitoring data (CPU, memory, DB, pools, GC, queues) covering the sa
 Raw k6 CSV output has one row per metric sample (`metric_name`, `timestamp` in seconds, `metric_value`, `name`, `status`, `check`), so filter on `metric_name` (for example `http_req_duration`).
 
 ### 2. Define the measurement window
-Mark ramp-up, steady state, and ramp-down. Compute headline numbers from steady state only. Keep the full timeline for the degradation analysis.
+Mark ramp-up, steady state, and ramp-down. Compute headline numbers from steady state only, and check that the window really is steady by comparing its first and second halves. A queue or latency that is still rising means the window average understates the outcome. Keep the full timeline for the degradation analysis.
 
 ### 3. Compute the distribution from raw samples
 Per transaction, over the steady-state window:
@@ -95,6 +95,7 @@ For each finding give: the number with unit and percentile, the load level, the 
 ## Pitfalls to avoid
 - Reporting averages, or averaging percentiles.
 - Including ramp-up and ramp-down in the headline numbers.
+- Reporting a window average without checking it is flat. A rising queue near saturation can read as a pass on the average and fail by the end.
 - Mixing failed and successful requests in one latency figure.
 - Trusting a 0% HTTP error rate without checking content-check failures.
 - Reading the tool's summary without checking the raw data.
