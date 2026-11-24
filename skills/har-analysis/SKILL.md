@@ -38,6 +38,11 @@ The script needs only Python 3 and masks query values for names that look like s
 ### 3. Capture again and compare
 Run the journey at least three times and analyse each HAR. A finding that appears in every run is a candidate bug. One that appears once is noise until shown otherwise (a slow first call, a cold server, a network blip). Report the range across runs for timings, not a single value.
 
+```
+python3 skills/har-analysis/scripts/compare_runs.py --journey tc-01-cold --json tc-01-cold.json captures/tc-01-*-cold-run*.har
+```
+This splits findings into consistent (in every run) and intermittent, gives the range of each number across runs, and refuses a HAR whose run record says the journey did not verify. The `--json` output is what `sweep-rollup` reads.
+
 ### 4. Read each finding as a hypothesis
 The script flags patterns. Decide for each one:
 

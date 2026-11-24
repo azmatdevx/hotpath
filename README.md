@@ -33,6 +33,7 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `perf-mode/playbooks/script-a-flow` | Turn a user journey into a working, validated script. |
 | `perf-mode/playbooks/new-load-test` | Plan, build, run, and report a load test end to end. |
 | `perf-mode/playbooks/results-to-report` | Vet, analyse, and write up completed run results. |
+| `perf-mode/playbooks/journey-sweep` | Run manual test cases as browser flows, capture HARs, find performance problems, and write the bugs. |
 
 ### Load test scripting (tool-agnostic, with per-tool references for JMeter, k6, Locust, Gatling)
 
@@ -67,6 +68,9 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `web-vitals-audit` | LCP, INP, CLS, and waterfall analysis. |
 | `har-analysis` | Find slow APIs, duplicate calls, large or uncacheable assets, and N+1 patterns in a HAR, with a stdlib analyzer script. |
 | `perf-bug-writing` | Turn confirmed findings into reproducible, de-duplicated bug reports with a severity rubric. |
+| `flow-from-test-case` | Turn a markdown test case into a named, verifiable browser flow, and list the steps that cannot be automated. |
+| `journey-capture` | Run a flow in a browser and record HARs (cold and warm, repeated, verified to have completed). |
+| `sweep-rollup` | Merge findings across journeys into one de-duplicated list of problems. |
 | `sql-plan-analysis` | Slow queries via execution plans (Postgres, Oracle, SQL Server, MySQL). |
 | `jvm-gc-analysis` | Latency, CPU, and memory problems on JVM services. |
 
@@ -90,7 +94,7 @@ skills/<name>/SKILL.md          the skill (method, steps, pitfalls, done-when)
 skills/<name>/references/       per-tool syntax and gotchas
 skills/perf-mode/playbooks/     multi-step playbooks that chain skills
 instructions/                   CLAUDE.md / AGENTS.md templates (planned)
-workflows/                      workflow notes (planned)
+workflows/                      running skills at scale (journey-sweep across an epic)
 examples/                       case studies with real numbers (template included); demo-shop is a local target to practice on, with a worked case study in demo-shop-case-study
 scripts/validate-skills.py      checks frontmatter, names, TODOs, and committed captures (run in CI)
 ```

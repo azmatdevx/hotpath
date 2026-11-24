@@ -75,6 +75,8 @@ def started(e):
 
 
 def kb(n):
+    if n < 1024:
+        return f"{n} B"
     return f"{n / 1024:.0f} KB" if n < 1024 * 1024 else f"{n / 1024 / 1024:.1f} MB"
 
 
@@ -115,7 +117,8 @@ def analyze(har, slow_ms=1000, big_kb=500, static_kb=300):
                 time_ms=round(t), wait_ms=round(wait), kind=k)
         limit = static_kb if k in ("js", "css", "image", "font") else big_kb
         if max(dsize, tsize) > limit * 1024:
-            add("large-payload", e, f"{kb(tsize)} on the wire, {kb(dsize)} decoded ({k})",
+            add("large-payload", e, f"{kb(tsize)} on the wire"
+                + (f", {kb(dsize)} decoded" if dsize else ", decoded size not recorded") + f" ({k})",
                 transfer=tsize, decoded=dsize, kind=k)
         if (status == 200 and dsize >= 1024 and any(m in mime for m in TEXT_MIME)
                 and not hdr(r.get("headers"), "content-encoding")):
@@ -185,9 +188,9 @@ def render(summary, findings):
     out = [f"# HAR analysis\n",
            f"{summary['requests']} requests, {kb(summary['transfer_bytes'])} transferred, "
            f"by kind {summary['by_kind']}.",
-           f"Third-party traffic: {kb(summary['third_party_bytes'])}"
-           + (f" ({', '.join(h for h, _ in summary['top_third_party'])})" if summary['top_third_party'] else "")
-           + ".\n"]
+           (f"Third-party traffic: {kb(summary['third_party_bytes'])} "
+            f"({', '.join(h for h, _ in summary['top_third_party'])}).\n" if summary['third_party_bytes']
+            else "No third-party traffic.\n")]
     if not findings:
         out.append("No findings at these thresholds.")
     for t in dict.fromkeys(f["type"] for f in findings):

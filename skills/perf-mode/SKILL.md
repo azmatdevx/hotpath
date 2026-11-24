@@ -26,6 +26,7 @@ If no playbook fits, say so, then work from the principles and the individual sk
 | [script-a-flow](playbooks/script-a-flow.md) | Turn a user journey into a working, validated load test script in any tool. |
 | [new-load-test](playbooks/new-load-test.md) | Plan, build, run, and report a load test end to end. |
 | [results-to-report](playbooks/results-to-report.md) | Take completed run results, vet them, analyse them, and write them up. |
+| [journey-sweep](playbooks/journey-sweep.md) | Run a set of manual test cases as browser flows, capture HARs, find performance problems, and write the bugs. |
 
 ## Ground rules
 

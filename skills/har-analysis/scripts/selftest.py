@@ -6,8 +6,11 @@ The HAR is built in memory and never written to disk. It is synthetic, so passin
 analyzer handles every real browser's HAR; run it on a real capture too.
 """
 import datetime
+import json
 import os
+import subprocess
 import sys
+import tempfile
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from analyze_har import analyze  # noqa: E402
@@ -61,6 +64,36 @@ def build():
     return {"log": {"entries": e}}
 
 
+def check_runs_and_rollup():
+    """Two runs where one finding is missing from the second: it must be intermittent, the rest consistent."""
+    here = os.path.dirname(os.path.abspath(__file__))
+    rollup = os.path.join(here, "..", "..", "sweep-rollup", "scripts", "rollup.py")
+    with tempfile.TemporaryDirectory() as d:
+        full = build()
+        fewer = build()
+        fewer["log"]["entries"] = [x for x in fewer["log"]["entries"] if "/api/missing" not in x["request"]["url"]]
+        paths = []
+        for i, har in enumerate((full, fewer)):
+            p = os.path.join(d, f"run{i}.har")
+            json.dump(har, open(p, "w"))
+            paths.append(p)
+        outs = []
+        for j in ("tc-a", "tc-b"):
+            o = os.path.join(d, j + ".json")
+            subprocess.run([sys.executable, "-I", os.path.join(here, "compare_runs.py"), "--journey", j,
+                            "--json", o] + paths, check=True, capture_output=True)
+            outs.append(o)
+        rows = json.load(open(outs[0]))
+        cons = {(r["type"], r["url"].replace(HOST, "")): r["consistent"] for r in rows}
+        assert cons[("failed-request", "/api/missing")] is False, "missing finding should be intermittent"
+        assert cons[("slow-request", "/api/slow-report")] is True, "repeated finding should be consistent"
+        text = subprocess.run([sys.executable, "-I", rollup] + outs, check=True, capture_output=True,
+                              text=True).stdout
+        line = next(l for l in text.splitlines() if "/api/slow-report" in l)
+        assert "tc-a, tc-b (2)" in line, "the same problem in two journeys should be one row listing both"
+        assert "/api/missing" not in text, "intermittent findings must be left out by default"
+
+
 def main():
     summary, findings = analyze(build())
     got = {(f["type"], f["url"].replace(HOST, "")) for f in findings}
@@ -88,7 +121,8 @@ def main():
         missing.add(("summary", "third-party"))
     if missing or extra:
         sys.exit(1)
-    print(f"OK: {len(want)} planted findings found, no extra findings on the controls")
+    check_runs_and_rollup()
+    print(f"OK: {len(want)} planted findings found, no extra findings on the controls; cross-run and rollup checks pass")
 
 
 main()
