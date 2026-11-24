@@ -39,11 +39,11 @@ node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-01.js --base http
 
 Use at least 3 runs per cache state. One run cannot separate a real problem from noise.
 
-**Recording for a load test script (perf-mode).** A script needs the request and response bodies to find its correlations, and two recordings made as different users. Record with `--content embed` and give each recording a label, using a different test account for each (the flow reads the account from the environment, never from the file):
+**Recording for a load test script (perf-mode).** A script needs the request and response bodies to find its correlations, and two recordings made as different users. Record with `--content embed` and give each recording a label, using a different test account for each (the flow reads the account from the environment, never from the file; `--env NAME=VALUE` sets it without a shell prefix, which allowlists reject. Use it for account names, and let secrets such as passwords come from the environment):
 
 ```
-TEST_USER=alice node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label alice --out captures/
-TEST_USER=bobby node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label bobby --out captures/
+node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label alice --env TEST_USER=alice --out captures/
+node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label bobby --env TEST_USER=bobby --out captures/
 ```
 These HARs hold real tokens, cookies, and personal data. Keep them out of version control, out of bug text, and out of replies; the script prints a warning when it records bodies. Pass the pair to the script-correlation skill (`har_correlate.py`) and one of them with its run record to the script-authoring skill (`har_transactions.py`), if the load-testing skills are installed. The run record's steps carry their start and end times for that grouping.
 

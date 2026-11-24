@@ -25,6 +25,7 @@ module.exports = {
 ## Options worth knowing
 - `--content omit|embed`: `embed` records response bodies in the HAR (needed to find correlations for a load test script). The default `omit` records none, which is what a journey sweep wants.
 - `--label NAME`: puts NAME in the file names, so recordings of one journey as different users can share a folder. Without it the names are `<flow>-<cache>-runN`.
+- `--env NAME=VALUE`: sets an environment variable for the flow (repeatable), for example `--env TEST_USER=alice`, so no shell prefix is needed. Do not put secrets on the command line; they would show in process lists and logs.
 - `--cpu-slowdown N`: throttle the CPU N times (Chromium only); recorded in the run record.
 - Every step in the run record has `startedAt` and `endedAt` (epoch milliseconds).
 

@@ -8,6 +8,8 @@
 //                  script); the default omit records none. A HAR with bodies holds real tokens and personal data.
 //   --label NAME   put NAME in the file names (for example the test account), so two recordings of one journey
 //                  can sit in one folder
+//   --env NAME=VALUE   set an environment variable for the flow (repeatable), for example the test account:
+//                  --env TEST_USER=alice. Use it for non-secret values; secrets come from the environment.
 //   --cpu-slowdown N   throttle the CPU N times (Chromium only); recorded in the run record
 //   --overwrite    replace existing captures with the same name; without it the script refuses, so runs from
 //                  different attempts cannot be mixed by accident. Delete discarded captures instead where you can.
@@ -31,6 +33,13 @@ try {
 const { createFinder } = require('./locate');
 const vitals = require('./vitals');
 
+// --env NAME=VALUE (repeatable) sets variables for the flow, so no shell prefix is needed under an allowlist
+process.argv.forEach((v, i) => {
+  if (v === '--env' && /^[A-Za-z_][A-Za-z0-9_]*=/.test(process.argv[i + 1] || '')) {
+    const [k, ...rest] = process.argv[i + 1].split('=');
+    process.env[k] = rest.join('=');
+  }
+});
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };
 const flowPath = path.resolve(arg('flow'));
 const base = arg('base');
