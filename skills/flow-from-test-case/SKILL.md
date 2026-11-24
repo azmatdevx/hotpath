@@ -33,7 +33,7 @@ A journey with an unautomatable step is either captured manually for that part o
 - **Environment:** take the base URL from the command line, never from the flow file.
 
 ### 4. Write each step
-If you can drive the app, walk the test case once first (see `references/playwright-cli.md`) so each locator comes from the real page, not from a guess.
+If you can drive the app, walk the test case once with `playwright-cli` and let `scripts/cli_to_flow.py` write the flow from what you did (see `references/playwright-cli.md`), so each locator comes from the real page, not from a guess. Review every warning it gives before you use the flow.
 
 For every action:
 

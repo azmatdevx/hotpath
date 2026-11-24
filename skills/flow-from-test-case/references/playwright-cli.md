@@ -17,7 +17,7 @@ playwright-cli close
 ```
 Add `-s=<name>` to keep separate browser sessions, and `open --persistent` or `--profile=<dir>` to keep a login.
 
-## Authoring: walk the test case once, keep the code it prints
+## Authoring: walk the test case once, let the helper write the flow
 After every action the CLI prints the Playwright code it ran. For a ref it chooses a role-and-name locator:
 
 ```
@@ -26,13 +26,25 @@ playwright-cli click e4
 ```
 The page behind that example gives its button a new random id on every load (`eval "el => el.id"` returned `btn-ce27fce1`), and the printed locator does not depend on it.
 
-For each test case step:
-1. Do the step with the CLI, taking a `snapshot` first so the target is a real element, not a guess.
-2. Copy the printed code into the flow step, as the first candidate of a `find([...])` call.
-3. Read the printed code critically. Keep it only if it is a role and accessible name, label, text, or test id. If it printed a CSS selector, an `nth`, or a generated id, find a stabler handle in the snapshot and use that.
-4. After the last step, take a snapshot and read the visible result that proves the journey ended (a count, a name, a confirmation). That becomes `verify`.
+`scripts/cli_to_flow.py` records that code as you go and builds the flow module from it. Use the test case's own wording for each step; the build checks it against the test case.
 
-Then run the flow with `journey-capture` once, and prove `verify` can fail, as `flow-from-test-case` requires.
+```
+H=skills/flow-from-test-case/scripts/cli_to_flow.py
+python3 $H record walk.jsonl --step "Open the base URL" -- playwright-cli open http://localhost:3918/start
+playwright-cli find "3 orders"                       # look first: prove the page is in the expected state
+python3 $H record walk.jsonl --step "Wait for the orders count to appear" --wait-text "3 orders"
+playwright-cli snapshot                              # get the ref of the target
+python3 $H record walk.jsonl --step 'Click "Refresh orders"' -- playwright-cli click e4
+python3 $H record walk.jsonl --step "Wait for the refresh to finish" --wait-text "3 orders (refreshed)"
+python3 $H build walk.jsonl --id tc-02 --test-case journeys/02-refresh-orders.md \
+          --expect-text "3 orders (refreshed)" --out flows/02-refresh-orders.js
+```
+- `record` runs the CLI command, shows its output, and keeps the printed code. It refuses commands that only look at the page (`snapshot`, `find`, `eval`, `requests`). `--wait-text` and `--wait-ms` record steps that wait.
+- `build` writes the flow: the base URL is replaced by `base`, element actions go through `find` with the printed locator first, and `verify` waits for `--expect-text`.
+- **Warnings** (exit code 1, the file is still written) mean a person or agent must review: an unstable locator (CSS, an id, `nth`, `first`, a role with no name), code it cannot translate, a typed value for a field that looks like a secret (replaced with `process.env.SWEEP_SECRET`), a recorded step that is not in the test case, or a test case step never recorded. Fix the walk or the flow, then build again.
+- Read the generated file once. The helper cannot tell whether the wait text really proves the step finished.
+
+Then run the flow with `journey-capture`, and prove `verify` can fail, as `flow-from-test-case` requires. Run `python3 skills/flow-from-test-case/scripts/selftest.py` to check the converter itself.
 
 ## Repairing: use the failure bundle first, the CLI second
 The failure bundle already holds an accessibility snapshot taken at the failure. Often that is enough to find the element by meaning. If it is not, reproduce the state with the CLI: open the URL, replay the earlier steps, `snapshot`, and look at what the step needed. Then follow `flow-repair`.

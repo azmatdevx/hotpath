@@ -1,0 +1,4 @@
+{"step": "Open the base URL", "kind": "cli", "command": "open http://localhost:3918/start", "code": ["await page.goto('http://localhost:3918/start');"]}
+{"step": "Wait for the orders count to appear", "kind": "wait-text", "text": "3 orders"}
+{"step": "Click \"Refresh orders\"", "kind": "cli", "command": "click e4", "code": ["await page.getByRole('button', { name: 'Refresh orders' }).click();"]}
+{"step": "Wait for the refresh to finish", "kind": "wait-text", "text": "3 orders (refreshed)"}

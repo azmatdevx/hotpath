@@ -6,6 +6,7 @@ A small web app with planted performance problems, a markdown test case, and a f
 - `server.js`: the app (port 3918). Planted: three concurrent calls to the same API, a 1.5 s API, a 1.2 MB uncompressed JSON list, a 400 KB uncompressed and uncacheable script, a 900 KB image, eight item calls one by one (N+1), a failing call, a two-hop redirect, and a poll every 1.5 s. Control: a small gzip-compressed script with a fingerprinted name and long-lived cache headers, which must not be flagged.
 - `journeys/01-view-orders.md`: the test case, in the markdown shape the skills read.
 - `flows/01-view-orders.js`: the flow written from it, with a `verify` check on the end state.
+- `walks/02-refresh-orders.jsonl` and `flows/02-refresh-orders.from-cli.js`: a walk of `TC-02` recorded with `playwright-cli`, and the flow `cli_to_flow.py` built from it.
 - `repairs.md`: the repair log from the test of `flow-repair`.
 - `journeys/02-refresh-orders.md` and `flows/02-refresh-orders.js`: a journey that clicks a button whose id and class change on every page load.
 
@@ -47,6 +48,11 @@ The Refresh orders button gets a new random id on every load. Three flows for `T
 | Brittle | only the recorded id | failed at the click step, exit 1, and wrote a failure bundle |
 
 The failure bundle's accessibility snapshot showed `button "Refresh orders"`, which is what `flow-repair` needs to find the element by meaning. The repair loop was run once end to end on this app (see `repairs.md`): three failed cold runs of the brittle flow wrote bundles, the flow was repaired from the snapshot, and 6 fresh runs (3 cold, 3 warm) all verified. I performed that repair following `flow-repair`, in a test of the skill, so it shows the loop works on this case, not that an unattended agent repairs real apps reliably. A failed run's HAR is refused downstream, as with a failed `verify`.
+
+## Flow from a `playwright-cli` walk
+`TC-02` was walked once with `playwright-cli` (open, find, snapshot, click by ref), each step recorded with `cli_to_flow.py record`, and the flow built with `cli_to_flow.py build`. The converter's checks earned their keep on the first try: I had recorded "Wait for the orders count" while the test case says "Wait for the orders count to appear", and the build warned about both the unmatched recorded step and the unrecorded test case step, so I re-walked it with the test case's wording. The rebuilt flow verified in 3 of 3 cold runs, and the same flow built with a wrong expected text ("4 orders") failed `verify`, as it should. The click step came out as `getByRole('button', { name: 'Refresh orders' })`, which does not depend on the page's random button id.
+
+This was one small journey walked by me, not an unattended agent.
 
 ## Bug drafts
 `perf-bug-writing/scripts/draft_bugs.py` turns the rollup into one markdown draft per request (9 for journey 1), with the evidence copied from the analyzer, two lines left for impact and proposed severity, and an engineer verification checklist. `--check` fails until those lines are filled. Nothing is filed; engineers verify and log each draft.
