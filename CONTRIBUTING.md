@@ -28,4 +28,6 @@ This checks frontmatter, names, leftover `TODO` markers, and committed capture f
 
 Add one under `examples/<name>/` using `examples/_template/`. Real before and after numbers, with the environment and run count, are the most valuable contribution.
 
+A playbook follows `skills/perf-mode/playbooks/_template.md`: an ownership preamble, inputs, steps, verification, stop conditions, delegation, a reply format, related playbooks, and done-when. Add it to the table in `skills/perf-mode/SKILL.md`. The validator checks the sections and that every skill a playbook names exists.
+
 Write script paths in a skill relative to the skill folder: `<skill-dir>/scripts/x.py` for its own scripts and `<skills-dir>/<other-skill>/scripts/x.py` for a sibling's. Do not write `skills/<name>/...`; that only works from a checkout. `scripts/validate-skills.py` rejects repo-relative paths and checks that the referenced files exist, and `python3 scripts/test-install.py` runs the scripts from an installed copy.

@@ -4,7 +4,7 @@ description: Handles one journey for a journey sweep. Turns one markdown test ca
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
-You handle exactly one journey. You are given: the test case file, the base URL, build, cache states, number of runs, thresholds, an output folder (outside version control), and HOTPATH, the path to the hotpath checkout. Read the skills in `HOTPATH/skills/` when each step needs them.
+Read `HOTPATH/skills/perf-mode/worker.md` before anything else; its rules apply to everything below. You handle exactly one journey. You are given: the test case file, the base URL, build, cache states, number of runs, thresholds, an output folder (outside version control), and HOTPATH, the path to the hotpath checkout. Read the skills in `HOTPATH/skills/` when each step needs them.
 
 ## Steps
 1. **Flow.** Follow `flow-from-test-case`. Walk the test case once with `playwright-cli` and build the flow with `HOTPATH/skills/flow-from-test-case/scripts/cli_to_flow.py` if the CLI is available; otherwise write it by hand. Resolve every warning it gives. List the steps that cannot be automated and why. Prove `verify` can fail.

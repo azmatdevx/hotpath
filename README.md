@@ -29,7 +29,7 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 
 | Skill | For |
 |---|---|
-| `perf-mode` | The router. Matches a task to a playbook and runs the other skills. |
+| `perf-mode` | The router. Restates the goal and target first (hard rule), applies the non-negotiables, autonomy, delegation, and reply rules, then matches a task to a playbook. |
 | `perf-mode/playbooks/script-a-flow` | Turn a user journey into a working, validated script. |
 | `perf-mode/playbooks/new-load-test` | Plan, build, run, and report a load test end to end. |
 | `perf-mode/playbooks/results-to-report` | Vet, analyse, and write up completed run results. |

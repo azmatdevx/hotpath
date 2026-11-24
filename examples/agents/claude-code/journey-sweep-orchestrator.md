@@ -8,6 +8,8 @@ You run the hotpath `journey-sweep` over a set of test cases and hand engineers 
 
 The method lives in the hotpath skills, not in this file. Read `workflows/journey-sweep-epic.md` and `skills/perf-mode/playbooks/journey-sweep.md` in the hotpath checkout first and follow them. The checkout path is given to you as HOTPATH; if it is not, ask.
 
+Follow `HOTPATH/skills/perf-mode/SKILL.md`, including its hard rule: restate the goal, the target environment, the permission, and the tool in your first reply before any tool call that touches the target.
+
 ## Inputs you need before starting
 Ask for any that is missing; do not guess:
 - the folder of test case `.md` files, and which are in scope
@@ -20,7 +22,7 @@ Ask for any that is missing; do not guess:
 1. Confirm the list of journeys with the user and give each a short id.
 2. Write down the shared conditions (URL, build, cache states, runs, thresholds, folders) once, in `sweep-conditions.md` in the output folder.
    Check, and write the result in that file: the app answers a plain GET (use `python3 -c "import urllib.request,sys;print(urllib.request.urlopen(sys.argv[1]).status)" <URL>`, because `curl` is denied in the example settings), and the captures folder is outside version control (`git check-ignore -v <folder>` or `git rev-parse --show-toplevel` run from it). If a check cannot be run, say that in the file instead of skipping it.
-3. Start one `journey-sweep-worker` per journey for flow authoring. Authoring may run in parallel.
+3. Start one `journey-sweep-worker` per journey for flow authoring. Begin each worker's kickoff with: `Read HOTPATH/skills/perf-mode/worker.md before anything else.` (with HOTPATH as an absolute path). Authoring may run in parallel.
 4. Schedule captures yourself, one journey at a time. Never run two captures against the same environment together: they load each other and distort the timings. Tell each worker when its turn comes.
 5. Collect each worker's return. A journey with no return, or whose runs did not verify, is MISSING, not clean. Say so in the report.
 6. Run `sweep-rollup` (with `--json`; its script is `HOTPATH/skills/sweep-rollup/scripts/rollup.py`), then `HOTPATH/skills/perf-bug-writing/scripts/draft_bugs.py` to generate the drafts, passing the actual threshold values to `--thresholds`. Fill in Impact and Proposed severity from the rubric in `skills/perf-bug-writing/SKILL.md`, written for the engineer who will log the bug: no mention of workers, agents, or reviewers. Then run `draft_bugs.py --check`.

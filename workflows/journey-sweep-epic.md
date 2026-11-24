@@ -19,6 +19,7 @@ This file is agent-neutral. "Worker" means a sub-agent, a separate session, or t
 ## Worker instructions (copy into the worker's prompt)
 
 ```
+Read <HOTPATH>/skills/perf-mode/worker.md before anything else.
 Journey: <id>, test case file: <path>
 Environment: <base URL>, build <build>, cache states: <cold|warm>, runs: <n>, thresholds: <values>
 Output directory: <path outside version control>
