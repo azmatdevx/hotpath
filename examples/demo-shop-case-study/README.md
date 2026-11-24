@@ -97,7 +97,38 @@ In knee run 2, queue and latency climb through the 65/s hold:
 
 So at 65/s the queue is still growing when the hold ends. The run that looked like a narrow pass was already over both SLAs in its second half (checkout 428 ms, search 219 ms). The reported 65/s numbers are snapshots of a rising queue, and a longer hold would likely read worse.
 60/s met both SLAs in every half-window of all six runs (worst checkout p95 256 ms, worst search p95 126 ms).
-The sustainable SLA capacity is therefore between 60 and 65 iterations/s, most likely close to 60, against 66.7 from the slot arithmetic. Close to saturation, a few iterations per second separate a stable system from a climbing queue.
+The sustainable SLA capacity from these runs is between 60 and 65 iterations/s, against 66.7 from the slot arithmetic. Close to saturation, a few iterations per second separate a stable system from a climbing queue. The 5-minute holds below test that directly.
+
+### Five-minute holds at 62/s and 65/s
+
+The `hold` scenario ramps to the rate over 30 s and holds it for 5 minutes. Three runs each, `PREALLOC=500`, server restarted between runs, no dropped iterations in any run, k6 at 13-15% of one core. Per-minute view from `holdview.py`, excluding the 30 s ramp.
+
+**62/s met both SLAs in every one of the 15 minutes (3 runs x 5):**
+
+| Run | Search p95 (ms) | Checkout p95 (ms) | Queue average | Queue max |
+|---|---|---|---|---|
+| 1 | 100-112 | 194-223 | 5-9 | 38 |
+| 2 | 114-138 | 224-268 | 7-10 | 33 |
+| 3 | 111-133 | 223-261 | 8-11 | 40 |
+
+No search came back empty and every check passed. The queue stayed in single digits on average. Within a run the minute-to-minute range was 194-223 ms in run 1, 224-268 ms in run 2 and 223-261 ms in run 3, with no sustained climb. Runs 2 and 3 were slower than run 1 throughout, so the run-to-run spread (up to about 70 ms of checkout p95 in the same minute) is as large as anything within a run.
+
+**65/s climbed until the queue reached its limit, in all three runs:**
+
+| Run | Checkout p95 first minute -> last minute (ms) | Queue average first -> last | Empty searches, last minute |
+|---|---|---|---|
+| 1 | 528 -> 1570 | 36 -> 186 | 2% |
+| 2 | 490 -> 1557 | 31 -> 184 | 3% |
+| 3 | 646 -> 1586 | 47 -> 187 | 5% |
+
+- **Crossing the SLAs:** checkout p95 first passed 400 ms in the 10 s bucket starting at 50 s (runs 1 and 3) or 60 s (run 2), and search p95 passed 200 ms in the same bucket as checkout. That is 20-40 s after the ramp ended.
+- **Settling:** the queue stopped climbing between about 3 and 5 minutes in, pinned just under the 200 trigger (maximum 200-206). Last-minute search p95 was 790-799 ms and checkout p95 1557-1586 ms, 4 times the checkout SLA.
+- **Why it stops there:** this is the degraded mode from finding 4. A few percent of searches skip the database, which is enough to hold the queue at the trigger instead of letting it grow.
+- **The threshold gap:** checks passed at 99.71-99.91% and `http_req_failed` was 0%, so the script's thresholds (`checks` above 99%, errors below 1%) passed and k6 exited 0 on all three 65/s runs, even though latency was 2-4 times over the SLAs. The script has no latency threshold. Without an SLA threshold the exit code would not have flagged these runs.
+- **Server-side confirmation:** orders created matched iterations exactly in five runs. In 62/s run 1 the target recorded 19,543 orders for 19,544 iterations. I did not investigate the one-order difference; the final `/metrics` sample may have been taken before the last order completed.
+
+**Verdict:** sustainable capacity under these SLAs is at least 62/s and below 65/s, within 7% of the arithmetic ceiling of 66.7. I did not test 63 or 64. The earlier suspicion that 65/s would read worse over a longer hold held: it climbed from 490-646 ms in the first minute to about 1.57 s of checkout p95 in the last.
+
 
 ## Findings
 
@@ -116,9 +147,10 @@ The generator CPU samples added later are what allowed the repeat to rule out th
 ## Limits of this result
 
 - One laptop ran generator, target, and samplers, and it was never idle. Do not read these numbers as capacity.
-- Each measured window is 45 s, which is too short for slow effects such as memory growth.
+- The stepped runs measure 45 s windows, which is too short for slow effects such as memory growth. The 5-minute holds are longer but cover only 62/s and 65/s.
 - The SLAs are assumptions made for the exercise, not requirements.
-- Between 60 and 65/s was not tested. At 65/s the queue was still rising when each 50 s hold ended, so a longer hold would likely give worse numbers than reported, and the sustainable rate is probably closer to 60/s.
+- Between 62 and 65/s was not tested (63 and 64 would narrow it). Holds were 5 minutes, which is enough to see the queue settle in this target but not for slow effects such as memory growth or connection leaks.
+- The 62/s runs differ from one another by up to about 70 ms of checkout p95 in the same minute with no change in setup, so a difference of that size between runs is noise.
 - Machine CPU and the target's `/metrics` are sampled every 1 to 2 s, so alignment with client events is approximate.
 
 ## Reproduce
@@ -128,8 +160,9 @@ cd ../demo-shop
 node server.js &                                   # target on :3917
 python3 sample-metrics.py server.csv &             # server-side samples
 python3 sample-procs.py procs.csv &                # generator, target, and machine CPU
-k6 run -e SCENARIO=steps -e PREALLOC=500 --out csv=raw.csv checkout.k6.js   # or SCENARIO=knee
+k6 run -e SCENARIO=steps -e PREALLOC=500 --out csv=raw.csv checkout.k6.js   # or SCENARIO=knee, or SCENARIO=hold -e RATE=62
 python3 analyze.py raw.csv server.csv procs.csv    # one run (STEPS=60,65,70,75 for the knee scenario)
+python3 holdview.py raw.csv server.csv procs.csv   # per-minute view of a hold run
 python3 compare-runs.py DIR PREFIX N               # N runs named PREFIX1-raw.csv, PREFIX1-server.csv, PREFIX1-procs.csv, ...
 ```
 

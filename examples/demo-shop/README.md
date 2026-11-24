@@ -21,6 +21,7 @@ Built-in behaviors for exercises: a limited "database" (`DB_SLOTS`, `DB_MS`) tha
 - `sample-procs.py`: samples CPU once per second for the generator (k6), the target, and the whole machine.
 - `compare-runs.py`: median and range across repeated runs (`compare-runs.py DIR PREFIX N`).
 - `timeseries.py`: time-bucketed view and a first-half versus second-half drift check per step.
+- `holdview.py`: per-minute view of a `hold` run (`SCENARIO=hold -e RATE=62`, 5 minutes by default, `-e HOLD=` to change).
 - `analyze.py`: per-step, per-transaction percentiles and server-side figures from k6 CSV output (`k6 run --out csv=raw.csv ...`), standard library only.
 
 Run the target and the generator on separate machines when you can. On one machine they compete for CPU.

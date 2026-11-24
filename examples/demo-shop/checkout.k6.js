@@ -1,6 +1,6 @@
 // Journey: login (CSRF + session cookie) -> search -> add to cart -> checkout.
 // Run:  k6 run -e SCENARIO=smoke checkout.k6.js
-// Scenarios: smoke (1 user, 1 iteration), concurrent (5 users x 3), steps (20/40/60/80), knee (60/65/70/75), load (constant arrival rate)
+// Scenarios: smoke (1 user, 1 iteration), concurrent (5 users x 3), steps (20/40/60/80), knee (60/65/70/75), hold (RATE for HOLD), load (constant arrival rate)
 import http from 'k6/http';
 import { check, group, sleep } from 'k6';
 import { parseHTML } from 'k6/html';
@@ -32,6 +32,14 @@ const scenarios = {
       { target: 65, duration: '5s' }, { target: 65, duration: '50s' },
       { target: 70, duration: '5s' }, { target: 70, duration: '50s' },
       { target: 75, duration: '5s' }, { target: 75, duration: '50s' },
+    ],
+  },
+  hold: {    // ramp to RATE over 30 s, then hold it for HOLD (default 5m): does the queue settle?
+    executor: 'ramping-arrival-rate', startRate: 1, timeUnit: '1s',
+    preAllocatedVUs: Number(__ENV.PREALLOC || 100), maxVUs: 1500,
+    stages: [
+      { target: Number(__ENV.RATE || 62), duration: '30s' },
+      { target: Number(__ENV.RATE || 62), duration: __ENV.HOLD || '5m' },
     ],
   },
   load: {
