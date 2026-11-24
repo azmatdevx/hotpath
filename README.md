@@ -97,7 +97,8 @@ skills/perf-mode/playbooks/     multi-step playbooks that chain skills
 instructions/                   CLAUDE.md / AGENTS.md templates (planned)
 workflows/                      running skills at scale (journey-sweep across an epic)
 examples/                       case studies with real numbers (template included); demo-shop is a local target to practice on, with a worked case study in demo-shop-case-study
-scripts/validate-skills.py      checks frontmatter, names, TODOs, and committed captures (run in CI)
+scripts/validate-skills.py      checks frontmatter, names, TODOs, script paths, and committed captures (run in CI)
+scripts/test-install.py         runs the skills from an installed copy in another directory (run in CI)
 ```
 
 ## Works across agents
@@ -106,19 +107,33 @@ Skills are plain markdown with minimal frontmatter (`name`, `description`) and n
 
 ## Install
 
-Copy or symlink skill folders into the location your agent reads skills from. Check your agent's current docs, since these paths change:
+Nothing is required to start. The skills are folders of markdown (a few with Python or Node scripts), so there are three ways to use them:
 
-| Agent | Typical location |
+1. **No install.** Clone the repo, open your agent in it, and tell it to follow `skills/perf-mode/SKILL.md`. This works in any agent. Nothing is discovered automatically, so you point the agent at the skill.
+2. **Copy or symlink into your agent's skills folder**, so the agent lists the skills and picks them by their descriptions. This is the route to use for everyday work.
+3. **Plugin or marketplace.** Not provided yet. Option 2 covers Claude Code, Cursor, Copilot and Codex.
+
+Where each agent looks (check your agent's current docs, since these paths change and I have only tested Claude Code):
+
+| Agent | Location |
 |---|---|
-| Claude Code | `~/.claude/skills/` or `.claude/skills/` |
-| Codex | `.agents/skills/` or `~/.codex/skills/` |
-| GitHub Copilot | `.github/skills/` |
+| Claude Code | `~/.claude/skills/` or `<project>/.claude/skills/` |
+| GitHub Copilot | `<project>/.github/skills/` (also `.claude/skills/`; `~/.copilot/skills/` for personal skills) |
+| Cursor | `<project>/.cursor/skills/` (it also reads `.agents/skills/`, `.claude/skills/` and `.codex/skills/`, per third-party guides) |
+| Codex | `<project>/.agents/skills/` or `~/.agents/skills/` (some lists give `.codex/skills/`) |
+
+Several agents read `.agents/skills/` or `.claude/skills/`, so one copy can often serve more than one. Link every skill folder into the location you chose, for example:
 
 ```sh
+mkdir -p ~/.claude/skills
 for s in skills/*/; do ln -s "$PWD/$s" ~/.claude/skills/"$(basename "$s")"; done
 ```
 
-If an agent has no skills support, paste the skill body into its instructions file (`AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`).
+Keep the skill folders side by side. Skills name each other and their scripts relative to the folder they were loaded from, so the scripts work wherever you install them. `scripts/test-install.py` checks this from a copy in another directory. The browser capture needs the `playwright` package in the project you run it from (`npm i playwright && npx playwright install chromium`).
+
+If an agent has no skills support, paste the skill body into its instructions file (`AGENTS.md`, `CLAUDE.md`, or `.github/copilot-instructions.md`), or use option 1.
+
+The reference agents in `examples/agents/claude-code/` are for Claude Code only. Other agents define agents differently; see that folder's README.
 
 ## Safety
 

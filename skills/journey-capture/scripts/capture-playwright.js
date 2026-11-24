@@ -15,7 +15,14 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { chromium } = require('playwright');
+let chromium;
+try {
+  // look in the project the command is run from first, then next to this script
+  ({ chromium } = require(require.resolve('playwright', { paths: [process.cwd(), __dirname] })));
+} catch (e) {
+  console.error('the playwright package was not found. In your project run: npm i playwright && npx playwright install chromium');
+  process.exit(2);
+}
 const { createFinder } = require('./locate');
 
 const arg = (n, d) => { const i = process.argv.indexOf('--' + n); return i > 0 ? process.argv[i + 1] : d; };

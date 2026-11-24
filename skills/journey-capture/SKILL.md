@@ -11,6 +11,10 @@ This skill is tool-agnostic. The runnable script is for Playwright (`scripts/cap
 
 Capture stays scripted. `playwright-cli` is for writing and repairing flows, not for measured runs: it has no HAR recording, and an agent steering the browser would make runs differ.
 
+`<skill-dir>` below is the folder that contains this SKILL.md (the scripts live in its `scripts/` folder), and `<skills-dir>` is its parent, where the sibling skills sit. Use the real path your agent loaded this skill from; do not assume the current directory is the hotpath checkout.
+
+The script finds the `playwright` package by looking in the current directory and then next to the script, so install it in your project (`npm i playwright`, `npx playwright install chromium`) and run the command from there.
+
 ## When to use
 - You have a flow (see `flow-from-test-case`) and want HARs for `har-analysis`.
 - You need the same capture done the same way for many journeys.
@@ -29,8 +33,8 @@ Timings are only comparable if the environment is. Capture against an environmen
 Cold is a fresh browser profile with an empty cache: what a first-time visitor sees. Warm is a repeat visit with the cache populated by a priming pass. Capture both for journeys where caching matters; the findings differ (assets that are cached when warm do not appear). State which one a result came from.
 
 ```
-node scripts/capture-playwright.js --flow flows/tc-01.js --base https://env.example --runs 3 --cache cold --out captures/
-node scripts/capture-playwright.js --flow flows/tc-01.js --base https://env.example --runs 3 --cache warm --out captures/
+node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-01.js --base https://env.example --runs 3 --cache cold --out captures/
+node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-01.js --base https://env.example --runs 3 --cache warm --out captures/
 ```
 
 Use at least 3 runs per cache state. One run cannot separate a real problem from noise.

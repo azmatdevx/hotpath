@@ -11,6 +11,8 @@ This skill is tracker-neutral. It produces markdown drafts, one file per bug, fo
 
 ## Steps
 
+`<skill-dir>` below is the folder that contains this SKILL.md (the scripts live in its `scripts/` folder), and `<skills-dir>` is its parent, where the sibling skills sit. Use the real path your agent loaded this skill from; do not assume the current directory is the hotpath checkout.
+
 ### 1. Check the finding is ready
 Do not write a bug from an unconfirmed finding. It needs:
 
@@ -30,7 +32,7 @@ Search the tracker (or your list of bugs for this exercise) for the same request
 ### 3. Generate the drafts
 Run the sweep rollup with `--json`, then:
 ```
-python3 skills/perf-bug-writing/scripts/draft_bugs.py roll.json --out bugs/ --env <base URL> --build <build> --cache <cold|warm> --thresholds "<the ones used>"
+python3 <skill-dir>/scripts/draft_bugs.py roll.json --out bugs/ --env <base URL> --build <build> --cache <cold|warm> --thresholds "<the ones used>"
 ```
 It writes `BUG-NN-<slug>.md` per request, plus `INDEX.md`. Several problems on one request are one draft. The evidence (request, ranges across runs, analyzer lines, capture file names) is copied as the analyzer produced it; do not retype numbers.
 
@@ -61,7 +63,7 @@ Rules for the content:
 
 Then run:
 ```
-python3 skills/perf-bug-writing/scripts/draft_bugs.py --check bugs/
+python3 <skill-dir>/scripts/draft_bugs.py --check bugs/
 ```
 It fails while any draft still has a placeholder or a missing section, so an unfinished draft cannot be handed over.
 

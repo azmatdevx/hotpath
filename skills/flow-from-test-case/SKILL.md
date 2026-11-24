@@ -9,6 +9,8 @@ Goal: turn a written test case into a flow that reaches the same end state a per
 
 This skill is tool-agnostic. It reuses `browser-script-authoring` for selectors, waits, and state, and `browser-script-review` for the review. The flow shape that `journey-capture` runs is in its `references/`. An agent can write the flow by walking the test case in the real app with `playwright-cli`; see `references/playwright-cli.md`.
 
+`<skill-dir>` below is the folder that contains this SKILL.md (the scripts live in its `scripts/` folder), and `<skills-dir>` is its parent, where the sibling skills sit. Use the real path your agent loaded this skill from; do not assume the current directory is the hotpath checkout.
+
 ## Steps
 
 ### 1. Read the test case as a list of actions
@@ -33,7 +35,7 @@ A journey with an unautomatable step is either captured manually for that part o
 - **Environment:** take the base URL from the command line, never from the flow file.
 
 ### 4. Write each step
-If you can drive the app, walk the test case once with `playwright-cli` and let `scripts/cli_to_flow.py` write the flow from what you did (see `references/playwright-cli.md`), so each locator comes from the real page, not from a guess. Review every warning it gives before you use the flow.
+If you can drive the app, walk the test case once with `playwright-cli` and let `<skill-dir>/scripts/cli_to_flow.py` write the flow from what you did (see `references/playwright-cli.md`), so each locator comes from the real page, not from a guess. Review every warning it gives before you use the flow.
 
 For every action:
 

@@ -13,7 +13,7 @@ This skill is agent-neutral. It assumes only that you can read files, edit files
 
 1. **Match the task to a playbook** in the table below. If two fit, pick the one that covers the end goal and say which you chose.
 2. **Copy the playbook's steps into a task list.** Use your agent's todo or plan tool if it has one. Otherwise keep a checklist in your reply and update it as each step finishes.
-3. **Run each step.** When a step names another skill, run it with your agent's skill mechanism. If there is none, read `skills/<name>/SKILL.md` and follow it. For a tool-specific step, also read the matching file in that skill's `references/`.
+3. **Run each step.** When a step names another skill, run it with your agent's skill mechanism. If there is none, read `<skills-dir>/<name>/SKILL.md` (the folder the skills were installed in) and follow it. Scripts named by a skill live in its own `scripts/` folder; use the path that skill was loaded from, not the current directory. For a tool-specific step, also read the matching file in that skill's `references/`.
 4. **Apply the principles** (`principle-*`) throughout, especially `principle-prove-the-work-happened`, `principle-validate-before-scale`, and `principle-explain-the-number`.
 5. **End with evidence.** Give a verdict backed by what you observed, not a summary of what you did.
 

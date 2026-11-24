@@ -38,6 +38,22 @@ for md in sorted(SKILLS.rglob("*.md")):
     if "TODO" in md.read_text(encoding="utf-8"):
         errors.append(f"{md.relative_to(ROOT)}: contains TODO")
 
+# script paths in skills must be written relative to the skill folder, and must exist
+REPO_REL = re.compile(r"(?<![\w<>/.-])skills/[a-z0-9-]+/(?:scripts|references)/")
+SKILL_DIR_REF = re.compile(r"<skill-dir>/((?:scripts|references)/[\w./-]+)")
+SKILLS_DIR_REF = re.compile(r"<skills-dir>/([a-z0-9-]+)/((?:scripts|references)/[\w./-]+)")
+for md in sorted(SKILLS.rglob("*.md")):
+    text = md.read_text(encoding="utf-8")
+    skill_dir = SKILLS / md.relative_to(SKILLS).parts[0]
+    for m in REPO_REL.finditer(text):
+        errors.append(f"{md.relative_to(ROOT)}: repo-relative script path '{m.group(0)}...'; use <skill-dir>/ or <skills-dir>/")
+    for m in SKILL_DIR_REF.finditer(text):
+        if not (skill_dir / m.group(1)).exists():
+            errors.append(f"{md.relative_to(ROOT)}: <skill-dir>/{m.group(1)} does not exist")
+    for m in SKILLS_DIR_REF.finditer(text):
+        if not (SKILLS / m.group(1) / m.group(2)).exists():
+            errors.append(f"{md.relative_to(ROOT)}: <skills-dir>/{m.group(1)}/{m.group(2)} does not exist")
+
 for path in ROOT.rglob("*"):
     if ".git" in path.parts:
         continue

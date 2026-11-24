@@ -7,6 +7,8 @@ description: Use after several user journeys have each been captured and analyse
 
 Goal: one row per real problem across the whole set of journeys, with the journeys it affects and the evidence range, ready for `perf-bug-writing`.
 
+`<skill-dir>` below is the folder that contains this SKILL.md (the scripts live in its `scripts/` folder), and `<skills-dir>` is its parent, where the sibling skills sit. Use the real path your agent loaded this skill from; do not assume the current directory is the hotpath checkout.
+
 ## Steps
 
 ### 1. Check every journey is in
@@ -15,7 +17,7 @@ List the journeys you set out to cover and compare with the analysed ones. A jou
 ### 2. Roll up
 Each journey has a JSON file from `har-analysis` (`compare_runs.py --json`). Run:
 ```
-python3 skills/sweep-rollup/scripts/rollup.py tc-01-cold.json tc-02-cold.json ...
+python3 <skill-dir>/scripts/rollup.py tc-01-cold.json tc-02-cold.json ...
 ```
 By default it keeps only findings seen in every run of a journey and lists the intermittent ones' counts at the bottom. Pass `--include-intermittent` only to inspect them; do not log them as bugs without more runs.
 

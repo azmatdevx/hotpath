@@ -9,6 +9,8 @@ Goal: turn a HAR capture into a short, evidence-backed list of candidate perform
 
 The detection is a script, so two people (or two agents) get the same findings from the same file. Judgement comes after: deciding which findings are real.
 
+`<skill-dir>` below is the folder that contains this SKILL.md (the scripts live in its `scripts/` folder), and `<skills-dir>` is its parent, where the sibling skills sit. Use the real path your agent loaded this skill from; do not assume the current directory is the hotpath checkout.
+
 ## When to use
 
 - A HAR was captured while walking through a user journey, manually or by a script.
@@ -29,7 +31,7 @@ Treat the HAR as sensitive. It holds cookies, tokens, and personal data. Do not 
 
 ### 2. Run the analyzer
 ```
-python3 skills/har-analysis/scripts/analyze_har.py capture.har
+python3 <skill-dir>/scripts/analyze_har.py capture.har
 ```
 Thresholds are flags: `--slow-ms` (default 1000), `--big-kb` for API and document responses (default 500), `--static-kb` for script, stylesheet, image, and font (default 300). Add `--json` for machine-readable output. Use the thresholds your team has agreed; keep the defaults only if none exist, and say so in the report.
 
@@ -39,7 +41,7 @@ The script needs only Python 3 and masks query values for names that look like s
 Run the journey at least three times and analyse each HAR. A finding that appears in every run is a candidate bug. One that appears once is noise until shown otherwise (a slow first call, a cold server, a network blip). Report the range across runs for timings, not a single value.
 
 ```
-python3 skills/har-analysis/scripts/compare_runs.py --journey tc-01-cold --json tc-01-cold.json captures/tc-01-*-cold-run*.har
+python3 <skill-dir>/scripts/compare_runs.py --journey tc-01-cold --json tc-01-cold.json captures/tc-01-*-cold-run*.har
 ```
 This splits findings into consistent (in every run) and intermittent, gives the range of each number across runs, and refuses a HAR whose run record says the journey did not verify. The `--json` output is what `sweep-rollup` reads.
 
@@ -79,4 +81,4 @@ Pass the confirmed findings to `perf-bug-writing`. Keep the analyzer output and 
 - The analyzer's thresholds are stated.
 
 ## Checking the analyzer
-`python3 skills/har-analysis/scripts/selftest.py` builds a synthetic HAR with planted problems and clean controls and confirms the analyzer reports exactly those. It uses a synthetic file, so also run the analyzer on a real capture from your browser or tool and look at the result before trusting it.
+`python3 <skill-dir>/scripts/selftest.py` builds a synthetic HAR with planted problems and clean controls and confirms the analyzer reports exactly those. It uses a synthetic file, so also run the analyzer on a real capture from your browser or tool and look at the result before trusting it.

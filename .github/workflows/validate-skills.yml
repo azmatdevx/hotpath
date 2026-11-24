@@ -13,3 +13,4 @@ jobs:
       - run: python3 scripts/validate-skills.py
       - run: python3 skills/har-analysis/scripts/selftest.py
       - run: python3 skills/flow-from-test-case/scripts/selftest.py
+      - run: python3 scripts/test-install.py

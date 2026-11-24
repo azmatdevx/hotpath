@@ -26,10 +26,10 @@ playwright-cli click e4
 ```
 The page behind that example gives its button a new random id on every load (`eval "el => el.id"` returned `btn-ce27fce1`), and the printed locator does not depend on it.
 
-`scripts/cli_to_flow.py` records that code as you go and builds the flow module from it. Use the test case's own wording for each step; the build checks it against the test case.
+`<skill-dir>/scripts/cli_to_flow.py` records that code as you go and builds the flow module from it. Use the test case's own wording for each step; the build checks it against the test case.
 
 ```
-H=skills/flow-from-test-case/scripts/cli_to_flow.py
+H=<skill-dir>/scripts/cli_to_flow.py   # <skill-dir>: the flow-from-test-case folder
 python3 $H record walk.jsonl --step "Open the base URL" -- playwright-cli open http://localhost:3918/start
 playwright-cli find "3 orders"                       # look first: prove the page is in the expected state
 python3 $H record walk.jsonl --step "Wait for the orders count to appear" --wait-text "3 orders"
@@ -44,7 +44,7 @@ python3 $H build walk.jsonl --id tc-02 --test-case journeys/02-refresh-orders.md
 - **Warnings** (exit code 1, the file is still written) mean a person or agent must review: an unstable locator (CSS, an id, `nth`, `first`, a role with no name), code it cannot translate, a typed value for a field that looks like a secret (replaced with `process.env.SWEEP_SECRET`), a recorded step that is not in the test case, or a test case step never recorded. Fix the walk or the flow, then build again.
 - Read the generated file once. The helper cannot tell whether the wait text really proves the step finished.
 
-Then run the flow with `journey-capture`, and prove `verify` can fail, as `flow-from-test-case` requires. Run `python3 skills/flow-from-test-case/scripts/selftest.py` to check the converter itself.
+Then run the flow with `journey-capture`, and prove `verify` can fail, as `flow-from-test-case` requires. Run `python3 <skill-dir>/scripts/selftest.py` to check the converter itself.
 
 ## Repairing: use the failure bundle first, the CLI second
 The failure bundle already holds an accessibility snapshot taken at the failure. Often that is enough to find the element by meaning. If it is not, reproduce the state with the CLI: open the URL, replay the earlier steps, `snapshot`, and look at what the step needed. Then follow `flow-repair`.
