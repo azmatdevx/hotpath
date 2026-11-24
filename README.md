@@ -65,6 +65,8 @@ perf-mode script the checkout flow for k6: record it twice, correlate the CSRF t
 | `browser-script-authoring` | Browser-based flows (Playwright, k6 browser, Puppeteer). |
 | `browser-script-review` | Reviewing browser scripts for flakiness and measurement integrity. |
 | `web-vitals-audit` | LCP, INP, CLS, and waterfall analysis. |
+| `har-analysis` | Find slow APIs, duplicate calls, large or uncacheable assets, and N+1 patterns in a HAR, with a stdlib analyzer script. |
+| `perf-bug-writing` | Turn confirmed findings into reproducible, de-duplicated bug reports with a severity rubric. |
 | `sql-plan-analysis` | Slow queries via execution plans (Postgres, Oracle, SQL Server, MySQL). |
 | `jvm-gc-analysis` | Latency, CPU, and memory problems on JVM services. |
 
