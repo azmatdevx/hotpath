@@ -53,6 +53,23 @@ The image disappearing when warm, while the script with no cache headers stays, 
 
 `har_transactions.py` grouped the same HAR by the test case's steps: `TC04_01_open_the_account_page` holds `GET /account`, `TC04_03_click_sign_in` holds `POST /api/signin` and `GET /api/me`, and the two steps that make no requests are listed as empty. These are the transaction names and the correlation list a k6 or JMeter script would be built from.
 
+## An agent run of `script-from-test-case`
+An agent followed the `perf-mode` playbook on `TC-04`: author a flow from the test case, capture it as `alice` and `bobby` with bodies, group the requests into transactions, find the correlations, write a k6 script, validate it, and deliver it on a feature branch of a scratch repository (the remote was a local bare repository, and with no PR tool it wrote the PR text to a file). It took four attempts; the last cost about $0.79 and 81 turns.
+
+What the delivered work looked like, which I checked myself:
+- **Delivery:** one commit on `perf/tc04-sign-in-initial-script` adding `k6/tc04-sign-in.js`; `main` on the remote unchanged; no HAR in the commit; the HARs (3 requests each, all with bodies) outside the repository; a 31-line PR text with the playbook's headings, including what was not covered.
+- **The script:** transactions named after the test case steps (`01_open_the_account_page`, `02_click_sign_in`); the CSRF token extracted from the HTML input and the bearer token from the JSON response, the cookie left to k6's jar, the client timestamp generated; configuration from `BASE_URL` and `TEST_USER` only; content checks that include "Welcome <user>". None of the six token-like values from the captures appears in the script or the commit.
+- **Validation, re-run by me on the real demo app:** 1 user for 3 iterations passed 21 of 21 checks; 5 users with both accounts passed 175 of 175 with no failed requests. A copy expecting the wrong name failed with exit code 99, and the script without `BASE_URL` failed with exit code 107.
+
+What the four attempts showed about the skills (all fixed, none re-run since the last two):
+1. **No shell access outside the repo** (a test-setup problem, solved with working directories).
+2. **Shell variable prefixes and `curl` rejected by the allowlist.** The one-command-per-call rule lived only in the worker rules, so both modes now carry it, with "stop on a denied command".
+3. **The capture command set the account with a shell prefix** (`TEST_USER=alice node ...`), which allowlists reject. The capture script now takes `--env TEST_USER=alice`.
+4. **The hard rule was not followed in spirit.** With every detail in the prompt, the agent contacted the target without writing the goal, target, permission, and tool back first. The last run wrote only "I'll read the playbook before contacting anything", which is the right order but not the content. The rule now says to begin with `Restating:` and give the four items, so it can be checked in a transcript. That change has not been tested.
+- **Smaller:** the agent ran two stub servers to show a check fails without breaking the target, which is good practice but left background processes (none were still running). The playbook now says to name a stub and stop it. `playwright-cli` left a `.playwright-cli/` folder in the repository; the reference now says to keep it out of the diff.
+
+What this does not show: one journey with three requests, a local app, one model, and a PR that was only written as text. The correlation step was easy here because the demo has one CSRF field and one token. Drift (`repair-a-script`) and `open-a-pr` against a real PR tool were not exercised.
+
 ## Web vitals
 `TC-03` was captured 3 times cold (Playwright 1.49, Chromium 131 headless, no throttling, a laptop that was not idle) and summarised with `vitals_summary.py`:
 
