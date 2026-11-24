@@ -83,15 +83,45 @@ def check_runs_and_rollup():
             subprocess.run([sys.executable, "-I", os.path.join(here, "compare_runs.py"), "--journey", j,
                             "--json", o] + paths, check=True, capture_output=True)
             outs.append(o)
+        # a request that repeats inside one HAR (here a second slow call) must still count once per run
+        twice = build()
+        twice["log"]["entries"].append(entry("/api/slow-report", 9, ms=2600, wait=2500))
+        tp = [os.path.join(d, f"twice{i}.har") for i in range(2)]
+        for p_ in tp:
+            json.dump(twice, open(p_, "w"))
+        to = os.path.join(d, "twice.json")
+        subprocess.run([sys.executable, "-I", os.path.join(here, "compare_runs.py"), "--journey", "tc-t",
+                        "--json", to] + tp, check=True, capture_output=True)
+        slow = next(r for r in json.load(open(to)) if r["type"] == "slow-request")
+        assert slow["runs_seen"] == 2 and slow["consistent"], "per-run counting: a repeat inside one HAR is one run"
         rows = json.load(open(outs[0]))
         cons = {(r["type"], r["url"].replace(HOST, "")): r["consistent"] for r in rows}
         assert cons[("failed-request", "/api/missing")] is False, "missing finding should be intermittent"
         assert cons[("slow-request", "/api/slow-report")] is True, "repeated finding should be consistent"
-        text = subprocess.run([sys.executable, "-I", rollup] + outs, check=True, capture_output=True,
-                              text=True).stdout
+        roll_json = os.path.join(d, "roll.json")
+        text = subprocess.run([sys.executable, "-I", rollup, "--json", roll_json] + outs, check=True,
+                              capture_output=True, text=True).stdout
         line = next(l for l in text.splitlines() if "/api/slow-report" in l)
         assert "tc-a, tc-b (2)" in line, "the same problem in two journeys should be one row listing both"
         assert "/api/missing" not in text, "intermittent findings must be left out by default"
+
+        # drafts: one per request, unfinished drafts are rejected, finished ones pass
+        draft = os.path.join(here, "..", "..", "perf-bug-writing", "scripts", "draft_bugs.py")
+        bugs = os.path.join(d, "bugs")
+        subprocess.run([sys.executable, "-I", draft, roll_json, "--out", bugs, "--env", HOST, "--build", "t"],
+                       check=True, capture_output=True)
+        files = sorted(f for f in os.listdir(bugs) if f.startswith("BUG-"))
+        vendor = [f for f in files if "vendor-js" in f]
+        assert len(vendor) == 1, "several problems on one request must be one draft"
+        assert "uncompressed" in open(os.path.join(bugs, vendor[0])).read(), "the draft must list every problem"
+        unfinished = subprocess.run([sys.executable, "-I", draft, "--check", bugs], capture_output=True)
+        assert unfinished.returncode != 0, "a draft with placeholders must fail the check"
+        for f in files:
+            path = os.path.join(bugs, f)
+            t = open(path).read().replace("(agent: fill in)", "filled")
+            open(path, "w").write(t)
+        finished = subprocess.run([sys.executable, "-I", draft, "--check", bugs], capture_output=True, text=True)
+        assert finished.returncode == 0, finished.stdout
 
 
 def main():
@@ -122,7 +152,7 @@ def main():
     if missing or extra:
         sys.exit(1)
     check_runs_and_rollup()
-    print(f"OK: {len(want)} planted findings found, no extra findings on the controls; cross-run and rollup checks pass")
+    print(f"OK: {len(want)} planted findings found, no extra findings on the controls; cross-run, rollup and bug-draft checks pass")
 
 
 main()

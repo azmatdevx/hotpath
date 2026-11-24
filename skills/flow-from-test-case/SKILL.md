@@ -7,7 +7,7 @@ description: Use when a manual test case written in markdown (preconditions, num
 
 Goal: turn a written test case into a flow that reaches the same end state a person would, so that a capture of it can be trusted.
 
-This skill is tool-agnostic. It reuses `browser-script-authoring` for selectors, waits, and state, and `browser-script-review` for the review. The flow shape that `journey-capture` runs is in its `references/`.
+This skill is tool-agnostic. It reuses `browser-script-authoring` for selectors, waits, and state, and `browser-script-review` for the review. The flow shape that `journey-capture` runs is in its `references/`. An agent can write the flow by walking the test case in the real app with `playwright-cli`; see `references/playwright-cli.md`.
 
 ## Steps
 
@@ -33,6 +33,8 @@ A journey with an unautomatable step is either captured manually for that part o
 - **Environment:** take the base URL from the command line, never from the flow file.
 
 ### 4. Write each step
+If you can drive the app, walk the test case once first (see `references/playwright-cli.md`) so each locator comes from the real page, not from a guess.
+
 For every action:
 
 - Find elements by role and accessible name, label, visible text, or a test id, never by position or by an id or class that is generated. Many apps generate ids on every load, and a flow built on them fails on the next run.

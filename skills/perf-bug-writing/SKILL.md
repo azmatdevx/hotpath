@@ -7,7 +7,7 @@ description: Use when turning confirmed performance findings (from a HAR analysi
 
 Goal: each bug is reproducible by someone who was not there, states a number with its context, and is logged once.
 
-This skill is tracker-neutral. It produces text; paste it into Jira, GitHub, or whatever you use.
+This skill is tracker-neutral. It produces markdown drafts, one file per bug, for an engineer to verify and log. The agent never files anything: the workflow is at a stage where a person checks every bug first.
 
 ## Steps
 
@@ -27,33 +27,42 @@ Search the tracker (or your list of bugs for this exercise) for the same request
 - If several findings share a cause (one slow API, many pages), write one bug and list the affected journeys.
 - If one request has several problems (large, uncompressed, and uncached), write one bug unless different teams fix them.
 
-### 3. Write it
-Use this shape:
+### 3. Generate the drafts
+Run the sweep rollup with `--json`, then:
+```
+python3 skills/perf-bug-writing/scripts/draft_bugs.py roll.json --out bugs/ --env <base URL> --build <build> --cache <cold|warm> --thresholds "<the ones used>"
+```
+It writes `BUG-NN-<slug>.md` per request, plus `INDEX.md`. Several problems on one request are one draft. The evidence (request, ranges across runs, analyzer lines, capture file names) is copied as the analyzer produced it; do not retype numbers.
+
+Each draft follows this shape, which you can use for a bug found some other way:
 
 ```
 Title: <what is wrong> on <request or asset>, <the number>
-        e.g. "GET /api/orders takes 2.4-2.8 s in the Checkout journey"
-
-Where:  journey / test case, step, environment and build, cache state (cold or warm)
+Where:  journey / test case, environment and build, cache state
 Seen:   the measurement, with the range across runs (n runs)
-        e.g. server wait 2.3-2.7 s of 2.4-2.8 s total, 3 runs, cold cache
 Expected: the threshold or the reason it is a problem
-        e.g. "agreed API budget 1 s" or "same data is fetched twice 50 ms apart"
 Impact: what the user waits for, and how often the journey hits it
-Evidence: request URL (secrets masked), timings, sizes, analyzer line, HAR file name and where it is stored
+Evidence: request URL (secrets masked), timings, sizes, analyzer line, where the capture is stored
 Suspected cause: only if the evidence shows one, labelled as a suspicion
-Affects: other journeys, if any
-Not tested: what this single-user capture cannot say (behaviour under load, other browsers, other data)
+Not tested: what this single-user capture cannot say
+Engineer verification: a checklist for the person who logs it
 ```
 
-Rules for the content:
-- Put the number and its unit in the title.
-- Quote ranges across runs, not a single best or worst value.
-- Mask tokens, session ids, and personal data in everything pasted. Attach the HAR only to a restricted location, never in public text.
-- Describe what you saw. Put a guess about the cause in its own labelled line.
-- Do not prescribe a fix unless the cause is shown.
+### 4. Fill in what only judgement can supply
+Two lines are left as `(agent: fill in)`: **Impact** and **Proposed severity**. Fill them from the journey and the rubric below. If you have a suspicion about the cause, add a clearly labelled "Suspected cause" line. Do not prescribe a fix unless the cause is shown.
 
-### 4. Set severity with the rubric
+Rules for the content:
+- Put the number and its unit in the title, and quote ranges across runs, not a single best or worst value.
+- Mask tokens, session ids, and personal data in everything you add. Capture files stay in the artifact store, never in public text.
+- Describe what you saw. Keep a guess about the cause in its own labelled line.
+
+Then run:
+```
+python3 skills/perf-bug-writing/scripts/draft_bugs.py --check bugs/
+```
+It fails while any draft still has a placeholder or a missing section, so an unfinished draft cannot be handed over.
+
+### Severity rubric
 Severity comes from impact on the journey, not from how large the number looks. Adjust the thresholds to your team's, and write them in the bug.
 
 | Severity | Typical signs |
@@ -64,8 +73,10 @@ Severity comes from impact on the journey, not from how large the number looks. 
 
 If you are unsure between two levels, take the lower and say why. Never raise severity because a finding is interesting.
 
-### 5. Review before filing
-Read each bug as the developer who gets it. Can they find the request, repeat the steps, and see what "fixed" looks like? If not, add that.
+### 5. Hand over, do not file
+Give the engineers the `bugs/` folder. Each draft is marked as not verified by a person and carries a checklist: reproduce in DevTools on the same build, confirm the numbers, rule out intended behaviour, search for duplicates, confirm impact and severity, then log it and record the ticket id in the file. The agent does not file, comment on, or close tickets.
+
+Before handing over, read each draft as the engineer who gets it. Can they find the request, repeat the steps, and see what "fixed" looks like? If not, add that.
 
 ## Pitfalls to avoid
 - Titles with no number or no request ("Slow page").
@@ -77,6 +88,7 @@ Read each bug as the developer who gets it. Can they find the request, repeat th
 
 ## Done when
 - Each bug passes step 1 and is not a duplicate.
-- Each bug states the number, the range, the runs, and the cache state.
-- Severity is set from the rubric, with the thresholds used.
+- Each draft states the number, the range, the runs, and the cache state.
+- Impact and proposed severity are filled in from the rubric, with the thresholds used, and `--check` passes.
 - Nothing sensitive is in the text.
+- Nothing was filed; an engineer verifies and logs each draft.

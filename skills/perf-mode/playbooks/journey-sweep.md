@@ -13,8 +13,8 @@ Inputs: the test case files, the base URL of the environment, the thresholds you
 3. **Capture.** Run `journey-capture` for each flow: at least 3 runs, cold (and warm where caching matters), one journey at a time. Do not analyse a run that did not verify. If a step fails because the page changed, run `flow-repair` between captures, then capture again from scratch; never analyse a run that was repaired or improvised.
 4. **Analyse each journey.** Run `har-analysis` with `compare_runs.py` on each journey's runs. Judge every consistent finding as real, expected, or unproven, with the reason.
 5. **Roll up.** Run `sweep-rollup` across the journeys. Account for any that are missing.
-6. **Write the bugs.** Run `perf-bug-writing` on each ranked problem, de-duplicating against the tracker. A person reviews and files them.
-7. **Report.** Give the journeys covered and missing, the cache state and build, the thresholds used, the bugs written, and what the sweep cannot say (behaviour under load, rendering time, other browsers).
+6. **Draft the bugs.** Run `perf-bug-writing`: it generates one markdown draft per request, you fill in impact and proposed severity, and `--check` must pass. De-duplicate against the tracker. Do not file anything; the engineers verify and log each draft.
+7. **Report.** Give the journeys covered and missing, the cache state and build, the thresholds used, the bug drafts written and where they are, and what the sweep cannot say (behaviour under load, rendering time, other browsers).
 
 Apply `principle-prove-the-work-happened` at steps 2 and 3, and `principle-explain-the-number` at step 4. See `workflows/journey-sweep-epic.md` for running this across a whole epic with several agents.
 

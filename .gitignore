@@ -18,3 +18,4 @@ summary.json
 node_modules/
 __pycache__/
 captures/
+.playwright-cli/

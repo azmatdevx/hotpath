@@ -16,6 +16,8 @@ Repair happens between captures, never during one. A run in which something was 
 
 The bundle can contain text from the page. Keep it with the captures, outside version control.
 
+If the bundle's snapshot is not enough to tell what changed, reproduce the state with `playwright-cli` (see `flow-from-test-case/references/playwright-cli.md`): open the page, replay the earlier steps, and snapshot.
+
 ## Steps
 
 ### 1. Say what the step meant

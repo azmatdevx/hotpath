@@ -12,8 +12,8 @@ This file is agent-neutral. "Worker" means a sub-agent, a separate session, or t
 4. **Prepare flows in parallel, capture in sequence.** Flows can be written by several workers at once (`flow-from-test-case`). Captures must not run in parallel against the same environment, so the orchestrator schedules them one at a time. Analysis (`har-analysis`) can run in parallel again.
 5. **Give each worker one journey** and these instructions: run `flow-from-test-case`, then `journey-capture`, then `har-analysis` for its journey only, and return the path of the journey's JSON file, the list of unautomatable steps, and any run that did not verify. A worker does not file bugs.
 6. **Collect the results.** Check every journey returned either a JSON file or a reason it is missing. A journey with no return is missing, not clean.
-7. **Roll up** with `sweep-rollup`, then run `perf-bug-writing` on each ranked problem.
-8. **Hand to a person.** A reviewer checks the findings classed as real, adjusts severities, and files the bugs (or approves the agent filing them if a tracker connection exists). Do not file anything automatically on first use.
+7. **Roll up** with `sweep-rollup` (with `--json`), then run `perf-bug-writing` to generate the drafts, fill in impact and proposed severity, and pass `--check`.
+8. **Hand to people, nothing is filed.** The output is a `bugs/` folder of markdown drafts and an `INDEX.md`. Engineers verify each draft against the app with DevTools, log it in the tracker themselves, and record the ticket id in the file. The agent does not file, comment on, or close tickets. This is deliberate: trust in the sweep is built by comparing its drafts with what the engineers confirm and reject, and autonomy is widened only as that record supports it.
 9. **Report** using the last step of the `journey-sweep` playbook.
 
 ## Worker instructions (copy into the worker's prompt)
@@ -30,6 +30,9 @@ for each consistent finding whether you judge it real, expected, or unproven, wi
 If a step fails, use skill flow-repair between captures and capture again from scratch; do not repair during a run.
 Do not file bugs. Do not paste HAR contents into your reply.
 ```
+
+## Climbing the trust ladder
+Keep a short record per sweep: drafts produced, drafts confirmed, drafts rejected with the reason, and problems the engineers found that the sweep missed. Reasons for rejection usually point at a threshold, a classification rule, or a flow that needs changing. Do not move to a more autonomous step (for example filing drafts as tickets) until several sweeps show few rejections and no misses that matter, and when you do, make it a separate, explicit decision.
 
 ## What this does not replace
 Repairs are changes to the test, so the reviewer also reads each worker's repair log and checks that a real defect was not repaired into a pass. A person still decides which findings matter for the product, signs off the severities, and covers the steps that cannot be automated. Single-user timings show relative problems, not capacity; use the load testing skills for that.

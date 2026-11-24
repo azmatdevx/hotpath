@@ -9,6 +9,8 @@ Goal: HAR files that are safe to analyse, because each one records a journey tha
 
 This skill is tool-agnostic. The runnable script is for Playwright (`scripts/capture-playwright.js`). `references/` holds the Playwright notes and a Puppeteer outline; read the one for the tool in use.
 
+Capture stays scripted. `playwright-cli` is for writing and repairing flows, not for measured runs: it has no HAR recording, and an agent steering the browser would make runs differ.
+
 ## When to use
 - You have a flow (see `flow-from-test-case`) and want HARs for `har-analysis`.
 - You need the same capture done the same way for many journeys.
