@@ -18,7 +18,7 @@ Assumed SLAs (set for the exercise): search p95 under 200 ms, checkout p95 under
 | Tool | k6 v1.0.0 (`checkout.k6.js`, scenario `steps`) |
 | Workload | open model, arrival rate stepped 20, 40, 60, 80 iterations/s; 50 s hold per step, first 5 s of each hold excluded |
 | Machine | one 8-core macOS laptop running generator, target, and samplers; not idle (13 to 29% busy on average per step) |
-| Runs | 3 repeat runs with `preAllocatedVUs=500`, plus an earlier run with 100 |
+| Runs | 3 repeat runs of `steps` with `preAllocatedVUs=500`, an earlier run with 100, and 3 runs of the `knee` scenario (60, 65, 70, 75/s) |
 | Evidence | k6 raw CSV, target `/metrics` once per second, CPU of k6, target, and machine every ~2 s |
 
 ## Skills used
@@ -46,7 +46,35 @@ Assumed SLAs (set for the exercise): search p95 under 200 ms, checkout p95 under
 | k6 CPU avg (% of one core) | 7 | 11 | 13 | 16 |
 | Target CPU avg (% of one core) | 4 | 4 | 4 | 5 |
 
-Verdict: **pass at 20, 40, and 60/s; fail at 80/s.** The SLA break lies between 60 and 80/s and was not narrowed further.
+Verdict: **pass at 20, 40, and 60/s; fail at 80/s.** A second set of runs narrowed the break to 65/s (below).
+
+## Narrowing the knee (second set of runs)
+
+Prediction written before the runs: 60/s passes, 65/s sits at about 97% slot use with checkout p95 near or over 400 ms, and 70 and 75/s fail with searches starting to return empty.
+Three runs of the `knee` scenario, otherwise identical (median [min-max]):
+
+| Metric | 60/s | 65/s | 70/s | 75/s |
+|---|---|---|---|---|
+| Achieved iterations/s | 60.0 | 65.0 | 70.0 | 75.0 |
+| Dropped iterations | 0 | 0 | 0 | 0 |
+| Search p95 (ms) | 98 [90-100] | 232 [196-253] | 820 [801-823] | 822 [813-828] |
+| Checkout p95 (ms) | 188 [176-192] | 454 [393-498] | 1647 [1606-1648] | 1757 [1733-1780] |
+| Searches returning 200 with no items | 0% | 0% | 28% [20-29] | 57% [55-60] |
+| DB slots in use (avg, of 8) | 7.4 | 8.0 | 8.0 | 8.0 |
+| DB queue (avg) | 5 | 30 [21-33] | 189 [172-190] | 203 [201-204] |
+| Orders completed/s | 60.0 | 64.2 | 68.3 | 75.0 |
+| k6 CPU avg / max (% of one core) | 14 / 19 | 14 / 19 | 15 / 20 | 16 / 21 |
+
+The prediction held. Per run at the boundary:
+
+| Run | 60/s search, checkout p95 | 65/s search, checkout p95 | 65/s result |
+|---|---|---|---|
+| 1 | 100, 192 ms | 196, 393 ms | pass, narrowly |
+| 2 | 98, 188 ms | 232, 454 ms | fail both |
+| 3 | 90, 176 ms | 253, 498 ms | fail both |
+
+So 60/s met both SLAs in all three runs, and 65/s met them in one of three. The effective capacity at the SLA is about 60 to 65 iterations/s, against 66.7 from the slot arithmetic. Latency climbs steeply close to saturation, so a few iterations per second separate a pass from a fail.
+The capacity arithmetic also held under degradation: with 28% of searches degraded, capacity is about 71.7/s (offered 70, orders 68.3/s), and with 57% degraded about 77.7/s (offered 75, orders 75.0/s).
 
 ## Findings
 
@@ -54,7 +82,7 @@ Verdict: **pass at 20, 40, and 60/s; fail at 80/s.** The SLA break lies between 
 2. **A 0% HTTP error rate hid a failing system.** Above the queue limit the target answers `/search` with 200 and no items, without touching the database. k6 reported `http_req_failed` at 0% for the whole run. Only the content check `search has items` caught it, failing for 75% of searches at 80/s. A status-only script would have passed.
 3. **Degraded replies distorted the latency numbers.** In the first run, at 80/s, they returned in under 10 ms and pulled the all-responses search p50 down to about 315 ms while genuine searches ran at about 756 ms p50. The failing share (1,611 of 3,352) matched the fast share exactly. I did not repeat that split for the three repeat runs.
 4. **The degraded mode flattens the queue.** Skipping 2 of 8 queries for 75% of iterations raises capacity to about 82 iterations/s, which matches the measured 79.7 iterations/s and 78.4 orders/s, and keeps the queue hovering near its trigger of 200.
-5. **The knee is sensitive.** Checkout p95 at 60/s ranged from 162 to 219 ms across runs, against a 3 ms spread at 20 and 40/s. Run 2, the noisiest, was worst, but the calmest run was not best, so machine noise is a possible but unproven cause.
+5. **The knee is sensitive.** Checkout p95 at 60/s ranged from 162 to 219 ms across the first three runs, against a 3 ms spread at 20 and 40/s, and at 65/s it ranged from 393 to 498 ms. In the second set the machine was quieter (12 to 13% busy on average) and the spread at 60/s narrowed to 176 to 192 ms, which is consistent with machine noise adding to the spread but does not prove it, since the runs differ in other ways. At 65/s the run with the highest starting load average was the one that passed, so noise does not explain that spread.
 
 ## What the first run taught
 
@@ -67,7 +95,7 @@ The generator CPU samples added later are what allowed the repeat to rule out th
 - One laptop ran generator, target, and samplers, and it was never idle. Do not read these numbers as capacity.
 - Each measured window is 45 s, which is too short for slow effects such as memory growth.
 - The SLAs are assumptions made for the exercise, not requirements.
-- The step between 60 and 80/s was not tested.
+- Between 60 and 65/s was not tested, and at 65/s the three runs straddle the SLA, so the break is not pinned to a single rate.
 - Machine CPU and the target's `/metrics` are sampled every 1 to 2 s, so alignment with client events is approximate.
 
 ## Reproduce
@@ -77,8 +105,8 @@ cd ../demo-shop
 node server.js &                                   # target on :3917
 python3 sample-metrics.py server.csv &             # server-side samples
 python3 sample-procs.py procs.csv &                # generator, target, and machine CPU
-k6 run -e SCENARIO=steps -e PREALLOC=500 --out csv=raw.csv checkout.k6.js
-python3 analyze.py raw.csv server.csv procs.csv    # one run
+k6 run -e SCENARIO=steps -e PREALLOC=500 --out csv=raw.csv checkout.k6.js   # or SCENARIO=knee
+python3 analyze.py raw.csv server.csv procs.csv    # one run (STEPS=60,65,70,75 for the knee scenario)
 python3 compare-runs.py DIR PREFIX N               # N runs named PREFIX1-raw.csv, PREFIX1-server.csv, PREFIX1-procs.csv, ...
 ```
 

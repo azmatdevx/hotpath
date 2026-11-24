@@ -8,9 +8,11 @@ the first 5 s of each 50 s hold is skipped as settling time.
 """
 import collections
 import csv
+import os
 import sys
 
-WINDOWS = {20: (15, 60), 40: (70, 115), 60: (125, 170), 80: (180, 225)}
+STEPS = [int(x) for x in os.environ.get("STEPS", "20,40,60,80").split(",")]   # step labels, e.g. STEPS=60,65,70,75
+WINDOWS = dict(zip(STEPS, [(15, 60), (70, 115), (125, 170), (180, 225)]))
 TX = ["01a_login_page", "01b_login", "02_search", "03_cart", "04_checkout"]
 FAST_MS = 100   # demo-shop: degraded search replies skip the database and return in under 10 ms
 
