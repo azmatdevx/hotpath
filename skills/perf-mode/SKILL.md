@@ -79,6 +79,10 @@ A session instruction such as "keep going until done" keeps you working through 
 
 No is an acceptable answer. Say when a test should not be run, when a result is inconclusive, or when the evidence does not support what the user hoped to hear.
 
+## Shell commands
+
+Where your agent runs commands under an allowlist (many do, and every non-interactive run does), run one command per call. Do not chain commands with `;`, `&&`, `||`, or pipes, do not prefix a command with a variable assignment (`DIR=... mkdir ...`), and use full paths instead of `cd`: the allowlist matches each command by its first word, and one part that is not allowed rejects the whole call. If a command is denied, do not look for another way to do the same thing; report what you needed and why, and stop that step. A denied command is the operator's decision.
+
 ## Delegation
 
 The lead owns the result and reads the numbers itself. Workers do the independent legwork.
