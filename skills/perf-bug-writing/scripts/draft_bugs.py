@@ -18,6 +18,7 @@ import sys
 import urllib.parse
 
 PLACEHOLDER = "(agent: fill in)"
+DEFAULT_THRESHOLDS = "analyzer defaults: slow over 1000 ms, API and document responses over 500 KB, static files over 300 KB"
 SECTIONS = ("## Where", "## Seen", "## Expected", "## Impact", "## Evidence", "## Not tested", "## Engineer verification")
 
 
@@ -88,8 +89,9 @@ def draft(i, rs, a):
          "hars": {j: x["hars"].get(j, []) for x in rs for j in x["journeys"]}}
     evid = "; ".join(f"{x['type']}: " + (", ".join(f"{k} {num(x, k)}" for k in x["ranges"]) or "no numeric evidence") for x in rs)
     seen_lines = "\n".join(f"- `{x['type']}`: {x['detail']}" for x in rs)
-    expected_lines = "\n".join("- " + EXPECTED.get(x["type"], "Per the team standard.").format(
-        thr=a.thresholds or "defaults of the analyzer: API 1 s, 500 KB, static 300 KB") for x in rs)
+    # a thresholds note with no number in it ("analyzer defaults") would hide the real values, so use those
+    thr = a.thresholds if a.thresholds and re.search(r"\d", a.thresholds) else DEFAULT_THRESHOLDS
+    expected_lines = "\n".join("- " + EXPECTED.get(x["type"], "Per the team standard.").format(thr=thr) for x in rs)
     where = "\n".join(f"- {j}: {a.cache or 'cache state not stated'}, {r['runs'][j]} runs, captures: "
                       f"{', '.join(r['hars'].get(j, [])[:3])}{' ...' if len(r['hars'].get(j, [])) > 3 else ''}"
                       for j in r["journeys"])

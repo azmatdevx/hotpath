@@ -110,6 +110,11 @@ def check_runs_and_rollup():
         bugs = os.path.join(d, "bugs")
         subprocess.run([sys.executable, "-I", draft, roll_json, "--out", bugs, "--env", HOST, "--build", "t"],
                        check=True, capture_output=True)
+        # a thresholds note with no numbers must not hide the real default values
+        subprocess.run([sys.executable, "-I", draft, roll_json, "--out", bugs, "--env", HOST, "--build", "t",
+                        "--thresholds", "analyzer defaults"], check=True, capture_output=True)
+        some = open(os.path.join(bugs, sorted(f for f in os.listdir(bugs) if f.startswith("BUG-"))[0])).read()
+        assert "1000 ms" in some and "300 KB" in some, "default thresholds must be written out"
         files = sorted(f for f in os.listdir(bugs) if f.startswith("BUG-"))
         vendor = [f for f in files if "vendor-js" in f]
         assert len(vendor) == 1, "several problems on one request must be one draft"

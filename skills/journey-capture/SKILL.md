@@ -35,6 +35,8 @@ node scripts/capture-playwright.js --flow flows/tc-01.js --base https://env.exam
 
 Use at least 3 runs per cache state. One run cannot separate a real problem from noise.
 
+The script refuses to overwrite captures that already exist for the same flow, cache state, and run number, so runs from two attempts cannot mix by accident. When you recapture after a failure or a repair, delete the discarded files first (or use a new `--out`); `--overwrite` exists but hides what you replaced.
+
 ### 4. Check every run completed
 The script writes `<flow>-<cache>-runN.json` beside each HAR with the steps reached and whether `verify` passed, and exits non-zero if any run failed. A run that did not verify is not analysed, and `compare_runs.py` refuses its HAR. Fix the flow or the environment and capture again; do not analyse the partial HAR.
 

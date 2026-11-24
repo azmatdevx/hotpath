@@ -57,6 +57,22 @@ This was one small journey walked by me, not an unattended agent.
 ## Bug drafts
 `perf-bug-writing/scripts/draft_bugs.py` turns the rollup into one markdown draft per request (9 for journey 1), with the evidence copied from the analyzer, two lines left for impact and proposed severity, and an engineer verification checklist. `--check` fails until those lines are filled. Nothing is filed; engineers verify and log each draft.
 
+## Agent runs
+The three reference agents in `examples/agents/claude-code/` ran the sweep over both journeys twice, headless, each time authoring the flows from the test cases (through `cli_to_flow.py`), capturing 3 cold runs per journey, analysing, drafting bugs, and having the drafts reviewed. Nothing was filed. What the runs showed:
+
+- **It worked, and the numbers held.** All 12 captures verified, with no drift. The 8 drafts agreed with the earlier hand-run analysis, and the orchestrator's claims matched the run records.
+- **Run-to-run spread is real.** `/api/orders` read 1503-1965 ms in the first run and 1503-1505 ms in the second, on an unchanged app: one slow call in one run. The reviewer in the first run flagged that the high end came from a single journey, which is the reason for at least 3 runs and for reporting ranges.
+- **Five defects in my agents and skills, found by watching them:**
+  1. An allowlist rejected a chained command (`mkdir; python3 | tail; cd …`), and the orchestrator stopped. The agents now run one command per call.
+  2. `curl` was denied and nothing said how else to check the app was up. The orchestrator now has a Python one-liner and `git check-ignore` is allowed.
+  3. Drafts said "the worker agreed" and "I judged" (6 of 8 drafts). The rules now say to write for the engineer; the second run had none.
+  4. The reviewer said CHANGE on every draft, and nothing acted on it. The orchestrator now makes one revision pass on the text it wrote, never on evidence, and reports what it changed.
+  5. A worker's second capture overwrote the first run's HAR, and the sweep only recovered because the worker noticed and recaptured. The capture script now refuses to overwrite and tells you to delete discarded captures.
+- **Still open:**
+  - The reviewer said CHANGE on all 8 drafts in the second run too. Part of it was substance and part wording, which is why it now separates BLOCKING from NIT. That change is untested.
+  - The reviewer said it could not read the rubric or the HARs, and tried to search the filesystem. The orchestrator now passes absolute paths and the reviewer says CANNOT CHECK instead. Also untested.
+  - In the revision pass, the orchestrator lowered BUG-03 (three concurrent identical calls on every load) from Medium to Low, against the rubric row for a duplicate on every visit, giving its own reason. The reviewer disagreed. The draft shows the reasoning, so the engineer can see it, but it is the kind of judgment the trust ladder says a person should make.
+
 ## What the real HAR taught
 The analyzer's synthetic self-test passed before these runs, and real HARs still showed four problems, which were fixed:
 - A request that repeats inside one HAR (journey 2 calls `/api/orders` twice) was counted once per request instead of once per run, so a consistent finding showed as `6/3 runs` and landed under intermittent. It now counts once per run, and the self-test covers it.

@@ -52,6 +52,9 @@ Engineer verification: a checklist for the person who logs it
 Two lines are left as `(agent: fill in)`: **Impact** and **Proposed severity**. Fill them from the journey and the rubric below. If you have a suspicion about the cause, add a clearly labelled "Suspected cause" line. Do not prescribe a fix unless the cause is shown.
 
 Rules for the content:
+- Write for the engineer who will log it. Do not mention agents, workers, reviewers, or other drafts' authors ("the worker agreed", "I judged"); state the evidence or the uncertainty directly.
+- When you cite the severity rubric, quote the row you used ("a duplicate call on every visit is Medium"); an engineer reading the bug does not have the rubric open. If you depart from the row, say why.
+- Pass the actual thresholds to `--thresholds` (for example `"slow 1000 ms, API 500 KB, static 300 KB"`); a note with no numbers is replaced by the defaults.
 - Put the number and its unit in the title, and quote ranges across runs, not a single best or worst value.
 - Mask tokens, session ids, and personal data in everything you add. Capture files stay in the artifact store, never in public text.
 - Describe what you saw. Keep a guess about the cause in its own labelled line.

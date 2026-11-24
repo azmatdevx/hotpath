@@ -4,6 +4,8 @@
 // usage: node capture-playwright.js --flow flows/01.js --base http://localhost:3918 --runs 3 --cache cold --out captures/
 //   --cache cold   fresh browser profile for every run (empty cache)
 //   --cache warm   a priming pass first, then the measured pass in the same profile (populated cache)
+//   --overwrite    replace existing captures with the same name; without it the script refuses, so runs from
+//                  different attempts cannot be mixed by accident. Delete discarded captures instead where you can.
 // Needs the `playwright` package and a browser (npm i playwright; npx playwright install chromium).
 //
 // A flow module exports { id, steps: [[name, async (page, base, find) => {}], ...], verify: async (page) => {} }.
@@ -28,6 +30,18 @@ if (!flowPath || !base || !['cold', 'warm'].includes(cache)) {
 }
 const flow = require(flowPath);
 fs.mkdirSync(out, { recursive: true });
+const existing = [];
+for (let n = 1; n <= runs; n++) {
+  for (const ext of ['.har', '.json', '.failure.json']) {
+    const f = path.join(out, `${flow.id}-${cache}-run${n}${ext}`);
+    if (fs.existsSync(f)) existing.push(path.basename(f));
+  }
+}
+if (existing.length && !process.argv.includes('--overwrite')) {
+  console.error('refusing to overwrite existing captures: ' + existing.join(', ') +
+    '\nDelete the ones you are discarding, use another --out, or pass --overwrite.');
+  process.exit(2);
+}
 
 async function walk(page, meta, tag) {
   const record = [];

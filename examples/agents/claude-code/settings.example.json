@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "Bash(python3:*)",
+      "Bash(playwright-cli:*)",
+      "Bash(npx playwright-cli:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(git rev-parse:*)"
+    ],
+    "deny": [
+      "Bash(gh issue:*)",
+      "Bash(gh pr:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ]
+  }
+}
