@@ -22,6 +22,12 @@ module.exports = {
 - **HAR:** `recordHar` with `content: 'omit'`. Sizes are still recorded. `content.size` can be 0 for some binary responses (an image showed 0 here), and the analyzer then reports the wire size and says the decoded size was not recorded.
 - Every run's profile is deleted afterwards.
 
+## Options worth knowing
+- `--content omit|embed`: `embed` records response bodies in the HAR (needed to find correlations for a load test script). The default `omit` records none, which is what a journey sweep wants.
+- `--label NAME`: puts NAME in the file names, so recordings of one journey as different users can share a folder. Without it the names are `<flow>-<cache>-runN`.
+- `--cpu-slowdown N`: throttle the CPU N times (Chromium only); recorded in the run record.
+- Every step in the run record has `startedAt` and `endedAt` (epoch milliseconds).
+
 ## Web vitals
 `scripts/vitals.js` installs PerformanceObservers before the page's scripts run and reads them after every step and once more at the end of the journey (with a 400 ms settle, because a slow interaction is reported only after the next paint). Recorded per page: LCP and its element, CLS, FCP, TBT (long tasks after FCP, minus 50 ms each), TTFB, and the slowest interaction as an INP approximation. They are lab values from one headless Chromium.
 

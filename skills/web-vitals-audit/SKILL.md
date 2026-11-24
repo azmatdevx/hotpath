@@ -60,7 +60,7 @@ Give before and after numbers per metric with the percentile or median, the cond
 ```
 python3 <skill-dir>/scripts/vitals_summary.py --journey tc-03-cold --json tc-03-vitals.json captures/tc-03-*-cold-run?.json
 ```
-It uses the latest reading per page in each run, shows median and range per metric against the limits (Google's "good" values by default; change them with the flags), refuses a run that did not verify, and writes rows that `sweep-rollup` and `perf-bug-writing` read like HAR findings. A metric over its limit in every run is a candidate finding; in some runs it is intermittent.
+It uses the latest reading per page in each run (an empty `--json` list means no metric was over its limit, not that the summary failed), shows median and range per metric against the limits (Google's "good" values by default; change them with the flags), refuses a run that did not verify, and writes rows that `sweep-rollup` and `perf-bug-writing` read like HAR findings. A metric over its limit in every run is a candidate finding; in some runs it is intermittent.
 
 What these numbers are: one user, headless Chromium, no network throttling unless you set it (`--cpu-slowdown` slows the CPU). They are lab values to compare across runs under the same conditions, not what real users see; field data is the measure of that. The slowest interaction equals INP only when the journey has few interactions. For a page the journey leaves and returns to, only the last reading per page is kept.
 

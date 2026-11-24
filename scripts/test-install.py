@@ -25,7 +25,8 @@ with tempfile.TemporaryDirectory() as tmp:
     elsewhere.mkdir()
 
     for rel in ("har-analysis/scripts/selftest.py", "flow-from-test-case/scripts/selftest.py",
-                "web-vitals-audit/scripts/selftest.py"):
+                "web-vitals-audit/scripts/selftest.py", "script-correlation/scripts/selftest.py",
+                "script-authoring/scripts/selftest.py"):
         r = subprocess.run([sys.executable, "-I", str(installed / rel)], cwd=elsewhere, capture_output=True, text=True)
         if r.returncode != 0:
             failures.append(f"{rel} failed from another directory:\n{r.stdout}{r.stderr}")

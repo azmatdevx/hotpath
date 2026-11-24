@@ -1,13 +1,14 @@
-# Playbook: results to report
+# Playbook: analyse a test run
 
-You own a verified finding that a stakeholder can act on, from completed results. Gather, vet, analyse, explain, write. Every number in the report matches the raw data.
+You own a verified finding that a stakeholder can act on, from a completed load test run (usually the artifacts of a pipeline run). Gather, vet, analyse, explain, write. Every number in the report matches the raw data.
 
-Use when: a load run is finished and its results need analysing and writing up, or someone brings results and asks what they mean.
+Use when: a load run has finished and its results need analysing and writing up, or someone brings results and asks what they mean.
 
 ## Inputs
 
-- The raw results (not only summaries), the script or plan version, the run configuration, and the environment notes.
-- Monitoring data covering the same time window.
+- The run's raw results (not only summaries), for example the pipeline's artifacts: JTL, k6 output, Gatling logs.
+- The script or plan version and the run configuration, and the pipeline run link or identifier.
+- Monitoring and observability data covering the same window, and database evidence if the database is suspected.
 - The SLAs or the question the results are meant to answer.
 - Where the data came from: environment, build, date.
 
@@ -16,8 +17,8 @@ Use when: a load run is finished and its results need analysing and writing up, 
 1. **Gather artifacts.** Collect raw results, the plan or script version, run configuration, environment notes, and monitoring data for the same window.
 2. **State the claim.** Write the headline you expect to report, with its metric, percentile, load level, and SLA.
 3. **Vet the data.** Run `results-sanity-check`. Fix or record every failed check before continuing.
-4. **Analyse.** Run `results-analysis`: percentiles per transaction (`principle-percentiles-not-averages`), the steady-state window only, error triage, throughput against response time, and where latency starts to rise.
-5. **Explain the number.** Apply `principle-explain-the-number`: line up server-side monitoring with the timeline and name the limiter. If you cannot, say so and list the evidence that is missing.
+4. **Analyse.** Run `results-analysis`: percentiles per transaction (`principle-percentiles-not-averages`), the steady-state window only, drift between its halves, error triage, throughput against response time, and where latency starts to rise.
+5. **Explain the number.** Apply `principle-explain-the-number`: line up server-side monitoring with the timeline and name the limiter. Use `observability-setup` to know what should have been collected, `jvm-gc-analysis` for JVM services, and `sql-plan-analysis` when the database is the suspect. If you cannot name the limiter, say so and list the evidence that is missing.
 6. **Write the report.** Run `test-report`: objectives, method, findings against the SLAs, evidence, risks, and recommendations. Lead with the verdict.
 7. **Check the write-up.** Every number matches the raw data, and caveats from failed checks appear in the report, not only in notes.
 
@@ -41,7 +42,7 @@ The verdict, the headline number with its range and SLA, the conditions, the lim
 
 ## Related playbooks
 
-`new-load-test` (this is its final step).
+`design-a-load-test` (the plan the run belongs to).
 
 ## Done when
 

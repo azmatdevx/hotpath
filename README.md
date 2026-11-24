@@ -44,9 +44,11 @@ Each mode first restates the goal, the target, the permission, and the tool, the
 | `sweep-mode/playbooks/repair-a-flow` | Repair a flow that failed because the page changed, then recapture. |
 | `sweep-mode/playbooks/review-drafts` | Read-only review of bug drafts against their evidence. |
 | `perf-mode` | Load testing: the same hard rule, plus rules for load, scripts, and numbers. |
-| `perf-mode/playbooks/script-a-flow` | Turn a user journey into a working, validated script. |
-| `perf-mode/playbooks/new-load-test` | Plan, build, run, and report a load test end to end. |
-| `perf-mode/playbooks/results-to-report` | Vet, analyse, and write up completed run results. |
+| `perf-mode/playbooks/script-from-test-case` | Test case to a validated load test script, delivered as a PR. |
+| `perf-mode/playbooks/repair-a-script` | Fix a script after the application changed. |
+| `perf-mode/playbooks/open-a-pr` | Hand verified work to a reviewer as a PR with evidence. |
+| `perf-mode/playbooks/design-a-load-test` | Plan a load test, build its scripts, and wire the pipeline that runs it. |
+| `perf-mode/playbooks/analyse-a-test-run` | Vet, analyse, and write up a completed run. |
 
 ### Journey sweep (sweep-mode)
 

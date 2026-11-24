@@ -4,6 +4,10 @@
 // usage: node capture-playwright.js --flow flows/01.js --base http://localhost:3918 --runs 3 --cache cold --out captures/
 //   --cache cold   fresh browser profile for every run (empty cache)
 //   --cache warm   a priming pass first, then the measured pass in the same profile (populated cache)
+//   --content omit|embed   embed records response bodies in the HAR (needed to find correlations for a load test
+//                  script); the default omit records none. A HAR with bodies holds real tokens and personal data.
+//   --label NAME   put NAME in the file names (for example the test account), so two recordings of one journey
+//                  can sit in one folder
 //   --cpu-slowdown N   throttle the CPU N times (Chromium only); recorded in the run record
 //   --overwrite    replace existing captures with the same name; without it the script refuses, so runs from
 //                  different attempts cannot be mixed by accident. Delete discarded captures instead where you can.
@@ -32,18 +36,24 @@ const flowPath = path.resolve(arg('flow'));
 const base = arg('base');
 const runs = Number(arg('runs', 3));
 const cache = arg('cache', 'cold');
+const content = arg('content', 'omit');
+const label = arg('label', '');
 const out = path.resolve(arg('out', 'captures'));
 const cpuSlowdown = Number(arg('cpu-slowdown', 1));
-if (!flowPath || !base || !['cold', 'warm'].includes(cache)) {
-  console.error('usage: capture-playwright.js --flow F --base URL [--runs 3] [--cache cold|warm] [--out DIR]');
+if (!flowPath || !base || !['cold', 'warm'].includes(cache) || !['omit', 'embed'].includes(content) || /[^\w.-]/.test(label)) {
+  console.error('usage: capture-playwright.js --flow F --base URL [--runs 3] [--cache cold|warm] [--content omit|embed] [--label NAME] [--out DIR]');
   process.exit(2);
 }
 const flow = require(flowPath);
 fs.mkdirSync(out, { recursive: true });
+const tagOf = (n) => `${flow.id}${label ? '-' + label : ''}-${cache}-run${n}`;
+if (content === 'embed') {
+  console.error('recording response bodies: these HARs hold real tokens and personal data. Keep them out of version control and out of bug text.');
+}
 const existing = [];
 for (let n = 1; n <= runs; n++) {
   for (const ext of ['.har', '.json', '.failure.json']) {
-    const f = path.join(out, `${flow.id}-${cache}-run${n}${ext}`);
+    const f = path.join(out, `${tagOf(n)}${ext}`);
     if (fs.existsSync(f)) existing.push(path.basename(f));
   }
 }
@@ -61,14 +71,14 @@ async function walk(page, meta, tag) {
     const t = Date.now();
     try {
       await fn(page, base, find);
-      record.push({ name, ok: true, ms: Date.now() - t });
+      record.push({ name, ok: true, ms: Date.now() - t, startedAt: t, endedAt: Date.now() });
       if (meta) {   // lab vitals as the page stands after this step; the summary keeps the latest per page
         const v = await vitals.collect(page);
         if (v) (meta.vitals = meta.vitals || []).push({ step: name, ...v });
       }
     }
     catch (e) {
-      record.push({ name, ok: false, ms: Date.now() - t, error: String(e.message).split('\n')[0] });
+      record.push({ name, ok: false, ms: Date.now() - t, startedAt: t, endedAt: Date.now(), error: String(e.message).split('\n')[0] });
       if (meta) await writeFailureBundle(page, meta, tag, name, e);
       break;
     }
@@ -96,20 +106,20 @@ async function writeFailureBundle(page, meta, tag, step, err) {
 (async () => {
   let failed = 0;
   for (let n = 1; n <= runs; n++) {
-    const tag = `${flow.id}-${cache}-run${n}`;
+    const tag = tagOf(n);
     const har = path.join(out, tag + '.har');
     const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'sweep-profile-'));
     let ctx;
-    const meta = { flow: flow.id, run: n, cache, base, steps: [], verified: false };
+    const meta = { flow: flow.id, run: n, cache, label: label || undefined, content, base, steps: [], verified: false };
     try {
       if (cache === 'warm') {
         const prime = await chromium.launchPersistentContext(profile, { headless: true });
         await walk(await prime.newPage(), null, tag);
         await prime.close();
-        ctx = await chromium.launchPersistentContext(profile, { headless: true, recordHar: { path: har, content: 'omit' } });
+        ctx = await chromium.launchPersistentContext(profile, { headless: true, recordHar: { path: har, content } });
       } else {
         const browser = await chromium.launch({ headless: true });
-        ctx = await browser.newContext({ recordHar: { path: har, content: 'omit' } });
+        ctx = await browser.newContext({ recordHar: { path: har, content } });
         ctx._sweepBrowser = browser;
       }
       await ctx.addInitScript(vitals.init);

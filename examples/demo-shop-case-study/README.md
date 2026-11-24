@@ -23,7 +23,7 @@ Assumed SLAs (set for the exercise): search p95 under 200 ms, checkout p95 under
 
 ## Skills used
 
-`perf-mode` with `script-a-flow`, then `script-authoring`, `script-correlation`, `script-parameterization`, `script-validation`, `script-review`, `load-test-design` (arithmetic), `load-run-checklist`, `results-sanity-check`, and `results-analysis`.
+`perf-mode` with the script-building skills (the playbook was then called `script-a-flow`), then `script-authoring`, `script-correlation`, `script-parameterization`, `script-validation`, `script-review`, `load-test-design` (arithmetic), `load-run-checklist`, `results-sanity-check`, and `results-analysis`.
 
 ## Method notes
 

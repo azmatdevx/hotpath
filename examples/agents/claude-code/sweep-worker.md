@@ -22,6 +22,7 @@ Read `HOTPATH/skills/sweep-mode/worker.md` before anything else; its rules apply
 - for each consistent finding: real, expected, or unproven, with the reason
 
 ## Rules
+- Keep scratch files (walks, dry runs, check flows) in a `scratch/` folder under your output folder, and list them in your report.
 - You do not file, comment on, or close tickets, and you do not post anywhere.
 - You do not paste HAR contents, cookies, tokens, or page text from failure bundles into your reply.
 - If you cannot tell whether a failure is locator drift or a real defect, stop and say so. Do not change the flow until it passes.

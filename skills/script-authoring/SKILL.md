@@ -9,6 +9,8 @@ Goal: a script that behaves like real users, is easy to read and change, and is 
 
 This skill is tool-agnostic. Per-tool structure and syntax are in `references/` (`jmeter.md`, `k6.md`, `locust.md`, `gatling.md`). Read the file for the tool in use after reading this one.
 
+`<skill-dir>` is the folder containing this SKILL.md; the script is in its `scripts/` folder.
+
 ## When to use
 
 - A new journey needs a load test script.
@@ -35,6 +37,13 @@ Keep what a real client sends to the system under test. Remove:
 Do not delete requests that the application needs for state (CSRF fetches, config calls, auth redirects).
 
 ### 4. Group into transactions
+If the capture came from `journey-capture`, let the script do the grouping and naming from the test case's own steps (it keeps response bodies and noise out of your context):
+
+```
+python3 <skill-dir>/scripts/har_transactions.py capture.har capture-run-record.json --prefix TC01 --json transactions.json
+```
+It assigns each request to the step that had most recently started, names the transactions `NN_<step text>` in journey order, and leaves out static files and third-party calls unless you keep them. Use those names as the script's transaction names.
+
 Wrap each meaningful user step in a named transaction so results report at the step the user cares about, not per request. Use stable names that match the journey ("01_login", "02_search"). Keep names free of dynamic values so results aggregate.
 
 ### 5. Handle session and headers

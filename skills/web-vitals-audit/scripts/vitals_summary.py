@@ -76,5 +76,7 @@ for url in pages:
                          "ranges": {key: [lo, hi]}, "detail": detail,
                          "hars": [os.path.basename(p) for p in a.records]})
     print()
+if not rows:
+    print("No metric was over its limit in any run, so there are no findings (the --json file holds an empty list).")
 if a.json:
     json.dump(rows, open(a.json, "w", encoding="utf-8"), indent=2)

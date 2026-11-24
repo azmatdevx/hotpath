@@ -56,8 +56,8 @@ def headline(r):
 
 
 EXPECTED = {
-    "slow-request": "Within the agreed API budget ({thr}).",
-    "large-payload": "Within the agreed size limits ({thr}), or the page uses the whole response.",
+    "slow-request": "Within the limit used ({thr}).",
+    "large-payload": "Within the size limits used ({thr}), or the page uses the whole response.",
     "uncompressed": "Text responses over 1 KB are compressed.",
     "not-cacheable": "Static files carry cache headers so repeat visits do not refetch them.",
     "duplicate": "The same data is fetched once unless it can have changed in between.",

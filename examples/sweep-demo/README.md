@@ -7,6 +7,7 @@ A small web app with planted performance problems, a markdown test case, and a f
 - `journeys/01-view-orders.md`: the test case, in the markdown shape the skills read.
 - `flows/01-view-orders.js`: the flow written from it, with a `verify` check on the end state.
 - `journeys/03-promo-page.md` and `flows/03-promo-page.js`: a page with planted web vitals problems (`/promo` in `server.js`): a hero image delayed 3 s (LCP), a banner injected above the content at 1 s (CLS), a 500 ms blocking script (TBT), and a click handler that blocks for 400 ms (interaction latency).
+- `journeys/04-sign-in.md` and `flows/04-sign-in.js`: a sign-in with a CSRF token in the page, a session cookie, a token returned by the sign-in call and sent as a bearer token, and a client timestamp (for trying `script-correlation`). The user comes from `TEST_USER`.
 - `walks/02-refresh-orders.jsonl` and `flows/02-refresh-orders.from-cli.js`: a walk of `TC-02` recorded with `playwright-cli`, and the flow `cli_to_flow.py` built from it.
 - `repairs.md`: the repair log from the test of `flow-repair`.
 - `journeys/02-refresh-orders.md` and `flows/02-refresh-orders.js`: a journey that clicks a button whose id and class change on every page load.
@@ -38,6 +39,19 @@ On a real Chromium HAR (Playwright 1.49, 3 cold runs, then 3 warm runs), every p
 | `polling` on `/api/notifications` (every 1.5 s) | 3/3 | 3/3 |
 
 The image disappearing when warm, while the script with no cache headers stays, is the cache-state difference the capture skill asks you to record.
+
+## Correlation on real browser HARs
+`TC-04` was recorded twice with `--content embed`, once as `alice` and once as `bobby` (Playwright 1.49), and the pair given to `har_correlate.py`. It found every dynamic value, with the right source and use, and masked them in its output:
+
+| Value | Reported as | Source | Used in |
+|---|---|---|---|
+| CSRF token | correlation (confirmed) | `GET /account`: HTML `input[name=csrf]` | `POST /api/signin` form field `csrf` |
+| Bearer token | correlation (confirmed) | `POST /api/signin`: JSON `$.token` | `GET /api/me` header `authorization` |
+| Session cookie | cookie (confirmed) | `GET /account`: `Set-Cookie sid` | `POST /api/signin` and `GET /api/me` |
+| Username | parameter | no earlier response contains it | `POST /api/signin` form field `username` |
+| `ts` | generated (timestamp) | none | `GET /api/me` query |
+
+`har_transactions.py` grouped the same HAR by the test case's steps: `TC04_01_open_the_account_page` holds `GET /account`, `TC04_03_click_sign_in` holds `POST /api/signin` and `GET /api/me`, and the two steps that make no requests are listed as empty. These are the transaction names and the correlation list a k6 or JMeter script would be built from.
 
 ## Web vitals
 `TC-03` was captured 3 times cold (Playwright 1.49, Chromium 131 headless, no throttling, a laptop that was not idle) and summarised with `vitals_summary.py`:
@@ -91,6 +105,19 @@ The three reference agents in `examples/agents/claude-code/` ran the sweep over 
   - The reviewer said CHANGE on all 8 drafts in the second run too. Part of it was substance and part wording, which is why it now separates BLOCKING from NIT. That change is untested.
   - The reviewer said it could not read the rubric or the HARs, and tried to search the filesystem. The orchestrator now passes absolute paths and the reviewer says CANNOT CHECK instead. Also untested.
   - In the revision pass, the orchestrator lowered BUG-03 (three concurrent identical calls on every load) from Medium to Low, against the rubric row for a duplicate on every visit, giving its own reason. The reviewer disagreed. The draft shows the reasoning, so the engineer can see it, but it is the kind of judgment the trust ladder says a person should make.
+
+### Third run, after the fixes (`sweep-mode`, three journeys)
+The orchestrator ran the sweep over `TC-01` to `TC-03` through `sweep-mode` (about $2.07, 58 orchestrator turns, 6 workers and 2 reviews). All 9 captures verified, with no repairs or drift, and it wrote 10 drafts that passed `--check`. Against the second run:
+- **The reviewer is usable now.** It said OK on 9 of 10 drafts with nits listed, against CHANGE on all 8 before, because it separates BLOCKING issues from NITs. Its first round still caught two wrong facts in text the orchestrator had written (an LCP range off by two milliseconds, and the wrong step blamed for a 3 s page open), and the orchestrator fixed both. I checked the step timings: "Open the promo page" took 3015-3033 ms in the run records, so the correction was right.
+- **No agent chatter in any draft**, and the threshold values were written out. The reviewer read the rubric and the evidence, so `CANNOT CHECK` never fired.
+- **A new finding:** the slow hero image on `/promo` came out as its own draft (3003-3005 ms), next to the vitals draft for the same page.
+- **What it got wrong, fixed afterwards:**
+  - A `[]` vitals file from `vitals_summary.py` means no metric was over its limit, but the orchestrator read it as a failure and regenerated it. The script now says so, and the skill documents it.
+  - A walk failed once with a 15 s timeout while two authoring workers ran at the same time. The playbook now treats a failure during parallel authoring as inconclusive until re-run alone.
+  - A worker left a dry-run script beside the flows. Workers now keep scratch files in a `scratch/` folder and list them.
+  - The generated drafts said "agreed" limits even when the analyzer defaults were used. The wording now says "the limit used".
+  - The one blocking note left on a draft was in a sentence the orchestrator added in its revision pass. The playbook now allows a second pass for BLOCKING issues only.
+- **Still a judgment, not a rule:** BUG-03 (three identical calls on every load) is Low with a stated reason, though the rubric row for a duplicate on every visit says Medium. The reviewer accepted it this time. A person should decide.
 
 ## What the real HAR taught
 The analyzer's synthetic self-test passed before these runs, and real HARs still showed four problems, which were fixed:

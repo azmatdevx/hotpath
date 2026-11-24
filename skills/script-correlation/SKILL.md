@@ -9,6 +9,8 @@ Goal: make a script reuse the values the server generates at runtime instead of 
 
 This skill is tool-agnostic. The method is the same everywhere; only the extraction syntax differs. Per-tool syntax is in `references/` (`jmeter.md`, `k6.md`, `locust.md`, `gatling.md`). Read the file for the tool in use after reading this one.
 
+`<skill-dir>` is the folder containing this SKILL.md; the script is in its `scripts/` folder.
+
 ## When to use
 
 - Replay returns 401/403, a redirect to login, or "session expired".
@@ -18,10 +20,15 @@ This skill is tool-agnostic. The method is the same everywhere; only the extract
 ## Steps
 
 ### 1. Capture twice
-Record or run the flow two times, as two different users or sessions if possible. Save both as HAR files or request/response logs. Capture requests as well as responses (headers and bodies). A response-only capture shows where values come from but not where they are used, so you cannot tell which later requests carry them.
+Record or run the flow two times, as two different users or sessions if possible. Save both as HAR files or request/response logs, with request and response headers and bodies. Treat these files as secrets: they hold real tokens and cookies. (With `journey-capture`, record bodies and use a different test account for each recording.) A response-only capture shows where values come from but not where they are used, so you cannot tell which later requests carry them.
 
 ### 2. Diff to find dynamic values
-Compare the two captures request by request. Anything that differs and is not user-supplied input is a candidate:
+For HAR files, let the script find the candidates instead of reading the captures yourself (this also keeps the bodies out of your context):
+
+```
+python3 <skill-dir>/scripts/har_correlate.py user-a.har user-b.har --json candidates.json
+```
+It aligns the two recordings request by request, lists every value that differs, and says which are correlations (the value first appears in an earlier response, in both recordings, with the place to extract it), which are cookies, parameters (test data), or client-generated values. Values are masked in its output. It needs response bodies in both files and the same sequence of requests. Check each candidate; it does not decide for you. Without HAR files, compare the captures request by request. Anything that differs and is not user-supplied input is a candidate:
 
 - Cookies and `Set-Cookie` values
 - Hidden form fields (CSRF tokens, ViewState, event validation)

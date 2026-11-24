@@ -39,6 +39,14 @@ node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-01.js --base http
 
 Use at least 3 runs per cache state. One run cannot separate a real problem from noise.
 
+**Recording for a load test script (perf-mode).** A script needs the request and response bodies to find its correlations, and two recordings made as different users. Record with `--content embed` and give each recording a label, using a different test account for each (the flow reads the account from the environment, never from the file):
+
+```
+TEST_USER=alice node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label alice --out captures/
+TEST_USER=bobby node <skill-dir>/scripts/capture-playwright.js --flow flows/tc-04.js --base https://env.example --runs 1 --content embed --label bobby --out captures/
+```
+These HARs hold real tokens, cookies, and personal data. Keep them out of version control, out of bug text, and out of replies; the script prints a warning when it records bodies. Pass the pair to the script-correlation skill (`har_correlate.py`) and one of them with its run record to the script-authoring skill (`har_transactions.py`), if the load-testing skills are installed. The run record's steps carry their start and end times for that grouping.
+
 The script also records lab web vitals after every step into the run record (`vitals`, with the browser's user agent and any CPU slowdown under `conditions`). Add `--cpu-slowdown 4` to throttle the CPU four times (Chromium only) when the question is how a slower device fares, and state it in the results. Summarise vitals with `web-vitals-audit` (`vitals_summary.py`).
 
 The script refuses to overwrite captures that already exist for the same flow, cache state, and run number, so runs from two attempts cannot mix by accident. When you recapture after a failure or a repair, delete the discarded files first (or use a new `--out`); `--overwrite` exists but hides what you replaced.

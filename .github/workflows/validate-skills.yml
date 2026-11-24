@@ -14,4 +14,6 @@ jobs:
       - run: python3 skills/har-analysis/scripts/selftest.py
       - run: python3 skills/flow-from-test-case/scripts/selftest.py
       - run: python3 skills/web-vitals-audit/scripts/selftest.py
+      - run: python3 skills/script-correlation/scripts/selftest.py
+      - run: python3 skills/script-authoring/scripts/selftest.py
       - run: python3 scripts/test-install.py

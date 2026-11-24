@@ -12,12 +12,13 @@ Use when: a worker is handed one journey by an orchestrator, or someone wants a 
 
 ## Steps
 
-1. **Turn the test case into a flow.** Run `flow-from-test-case`: walk the test case with `playwright-cli` if available and build the flow with `cli_to_flow.py`, resolve every warning, list the steps that cannot be automated, and prove `verify` can fail.
+1. **Turn the test case into a flow.** (If other workers are running at the same time, a check that fails here is inconclusive until you re-run it alone.) Run `flow-from-test-case`: walk the test case with `playwright-cli` if available and build the flow with `cli_to_flow.py`, resolve every warning, list the steps that cannot be automated, and prove `verify` can fail.
 2. **Wait for your turn** to capture, if the orchestrator schedules captures.
 3. **Capture.** Run `journey-capture`: at least the runs you were given, for each cache state, with web vitals recorded. If a step fails, follow `repair-a-flow`, then capture again from scratch.
 4. **Analyse the traffic.** Run `har-analysis` with `compare_runs.py --json` per cache state. Judge each consistent finding as real, expected, or unproven, with the reason.
 5. **Analyse the vitals.** Run `web-vitals-audit` on the run records: `<skills-dir>/web-vitals-audit/scripts/vitals_summary.py --json`. Keep the ranges across runs, and say which findings come from lab conditions without throttling.
-6. **Return** the summary the worker rules ask for, with paths instead of contents.
+6. **Tidy.** Keep scratch files (walks, dry runs, check flows) in a `scratch/` folder under your output folder, and list them in your reply. Do not leave them beside the flows.
+7. **Return** the summary the worker rules ask for, with paths instead of contents.
 
 ## Verification
 

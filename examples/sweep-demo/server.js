@@ -68,6 +68,26 @@ setTimeout(() => {                                                    // a banne
 setTimeout(() => { const end = Date.now() + 500; while (Date.now() < end) {} }, 1500);   // a long task
 </script></body></html>`;
 
+// Sign-in (journey 4), for trying correlation: a CSRF token in the page, a session cookie, a token returned by the
+// sign-in call and sent as a bearer token, and a client timestamp. All differ per user and per page load.
+const sessions = new Map();   // sid -> { csrf }
+const tokens = new Map();     // token -> username
+const cookieOf = (req, name) => ((req.headers.cookie || '').split(';').map((c) => c.trim().split('=')).find(([k]) => k === name) || [])[1];
+const readBody = (req) => new Promise((r) => { let b = ''; req.on('data', (d) => { b += d; }); req.on('end', () => r(b)); });
+const accountPage = (csrf) => `<!doctype html><html><head><title>Account</title></head><body>
+<form id="f"><input type="hidden" name="csrf" value="${csrf}"><input name="username" aria-label="Username"><button type="submit">Sign in</button></form>
+<p id="welcome"></p>
+<script>
+const f = document.getElementById('f');
+f.onsubmit = async (ev) => {
+  ev.preventDefault();
+  const r = await fetch('/api/signin', { method: 'POST', body: new URLSearchParams(new FormData(f)), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
+  const { token } = await r.json();
+  const me = await (await fetch('/api/me?ts=' + Date.now(), { headers: { authorization: 'Bearer ' + token } })).json();
+  document.getElementById('welcome').textContent = 'Welcome ' + me.name;
+};
+</script></body></html>`;
+
 function send(res, status, type, body, headers = {}) {
   res.writeHead(status, { 'content-type': type, ...headers });
   res.end(body);
@@ -77,6 +97,26 @@ http.createServer(async (req, res) => {
   const path = req.url.split('?')[0];
   const gz = /gzip/.test(req.headers['accept-encoding'] || '');
   if (path === '/') return send(res, 200, 'text/html', page(), { 'cache-control': 'no-cache' });
+  if (path === '/account') {
+    const csrf = crypto.randomBytes(12).toString('hex');
+    let sid = cookieOf(req, 'sid');
+    const headers = { 'cache-control': 'no-cache' };
+    if (!sid || !sessions.has(sid)) { sid = crypto.randomBytes(12).toString('hex'); headers['set-cookie'] = `sid=${sid}; Path=/; HttpOnly`; }
+    sessions.set(sid, { csrf });
+    return send(res, 200, 'text/html', accountPage(csrf), headers);
+  }
+  if (path === '/api/signin' && req.method === 'POST') {
+    const form = new URLSearchParams(await readBody(req));
+    const sess = sessions.get(cookieOf(req, 'sid'));
+    if (!sess || sess.csrf !== form.get('csrf')) return send(res, 403, 'application/json', '{"error":"csrf"}');
+    const token = crypto.randomBytes(16).toString('hex');
+    tokens.set(token, form.get('username'));
+    return send(res, 200, 'application/json', JSON.stringify({ token }));
+  }
+  if (path === '/api/me') {
+    const name = tokens.get((req.headers.authorization || '').replace(/^Bearer /, ''));
+    return name ? send(res, 200, 'application/json', JSON.stringify({ name })) : send(res, 401, 'application/json', '{"error":"auth"}');
+  }
   if (path === '/promo') return send(res, 200, 'text/html', promoPage, { 'cache-control': 'no-cache' });
   if (path === '/img/promo-hero.png') { await sleep(3000); return send(res, 200, 'image/png', tinyPng, { 'cache-control': 'no-cache' }); }
   if (path === '/start') return send(res, 302, 'text/html', '', { location: '/home' });
