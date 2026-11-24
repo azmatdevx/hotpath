@@ -19,7 +19,17 @@ Before any command or tool call that contacts the target (a reachability check c
 3. **Permission.** Who owns it, and that the user has said this task may test it. If you do not know, ask. Do not assume.
 4. **Tool and version**, and the conditions that matter (build, data set, cache state, duration).
 
-Then wait for a correction or a go-ahead only if something in 1 to 4 is unknown or looks wrong. If all four are clear, say so and proceed.
+Use this shape, with your own words in place of the dots:
+
+```
+Restating:
+- Goal: ...
+- Target: ... (shared or production: ...)
+- Permission: ...
+- Tool and conditions: ...
+```
+
+Do it even when it feels redundant: it is how the operator sees, before anything runs, that you read the target the same way they did. Then wait for a correction or a go-ahead only if something in 1 to 4 is unknown or looks wrong. If all four are clear, say so and proceed.
 
 No load, capture, script run, or measurement goes to a target until 2 and 3 are stated. A user's earlier instruction for a different task does not cover this one. Production is never a target unless the user names it for this task.
 <!-- hard-rule:end -->
@@ -69,7 +79,7 @@ No is an acceptable answer. Say when a finding is not supported, when a draft is
 
 ## Shell commands
 
-Where your agent runs commands under an allowlist (many do, and every non-interactive run does), run one command per call. Do not chain commands with `;`, `&&`, `||`, or pipes, do not prefix a command with a variable assignment (`DIR=... mkdir ...`), and use full paths instead of `cd`: the allowlist matches each command by its first word, and one part that is not allowed rejects the whole call. If a command is denied, do not look for another way to do the same thing; report what you needed and why, and stop that step. A denied command is the operator's decision.
+Where your agent runs commands under an allowlist (many do, and every non-interactive run does), run one command per call. Do not chain commands with `;`, `&&`, `||`, or pipes, do not prefix a command with a variable assignment or `env` (`DIR=... mkdir ...`), and use full paths instead of `cd`. Pass settings as the tool's own flags instead (`k6 run -e NAME=VALUE ...`, `capture-playwright.js --env NAME=VALUE`): the allowlist matches each command by its first word, and one part that is not allowed rejects the whole call. If a command is denied, do not look for another way to do the same thing; report what you needed and why, and stop that step. A denied command is the operator's decision.
 
 ## Delegation
 

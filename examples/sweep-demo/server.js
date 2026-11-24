@@ -70,19 +70,26 @@ setTimeout(() => { const end = Date.now() + 500; while (Date.now() < end) {} }, 
 
 // Sign-in (journey 4), for trying correlation: a CSRF token in the page, a session cookie, a token returned by the
 // sign-in call and sent as a bearer token, and a client timestamp. All differ per user and per page load.
+// DRIFT=v2 simulates a deployment that changes the sign-in contract: the CSRF field is renamed to _csrf_token, the
+// sign-in call moves to /api/v2/session, and its response key becomes access_token. The page is updated to match,
+// so a browser flow still works while a protocol script recorded earlier breaks.
+// DRIFT=defect simulates a real defect instead: /api/me answers 500 for a valid token.
+const DRIFT = process.env.DRIFT || '';
+const V2 = DRIFT === 'v2';
 const sessions = new Map();   // sid -> { csrf }
 const tokens = new Map();     // token -> username
 const cookieOf = (req, name) => ((req.headers.cookie || '').split(';').map((c) => c.trim().split('=')).find(([k]) => k === name) || [])[1];
 const readBody = (req) => new Promise((r) => { let b = ''; req.on('data', (d) => { b += d; }); req.on('end', () => r(b)); });
 const accountPage = (csrf) => `<!doctype html><html><head><title>Account</title></head><body>
-<form id="f"><input type="hidden" name="csrf" value="${csrf}"><input name="username" aria-label="Username"><button type="submit">Sign in</button></form>
+<form id="f"><input type="hidden" name="${V2 ? '_csrf_token' : 'csrf'}" value="${csrf}"><input name="username" aria-label="Username"><button type="submit">Sign in</button></form>
 <p id="welcome"></p>
 <script>
 const f = document.getElementById('f');
 f.onsubmit = async (ev) => {
   ev.preventDefault();
-  const r = await fetch('/api/signin', { method: 'POST', body: new URLSearchParams(new FormData(f)), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
-  const { token } = await r.json();
+  const r = await fetch('${V2 ? '/api/v2/session' : '/api/signin'}', { method: 'POST', body: new URLSearchParams(new FormData(f)), headers: { 'content-type': 'application/x-www-form-urlencoded' } });
+  const body = await r.json();
+  const token = body.${V2 ? 'access_token' : 'token'};
   const me = await (await fetch('/api/me?ts=' + Date.now(), { headers: { authorization: 'Bearer ' + token } })).json();
   document.getElementById('welcome').textContent = 'Welcome ' + me.name;
 };
@@ -105,16 +112,17 @@ http.createServer(async (req, res) => {
     sessions.set(sid, { csrf });
     return send(res, 200, 'text/html', accountPage(csrf), headers);
   }
-  if (path === '/api/signin' && req.method === 'POST') {
+  if (path === (V2 ? '/api/v2/session' : '/api/signin') && req.method === 'POST') {
     const form = new URLSearchParams(await readBody(req));
     const sess = sessions.get(cookieOf(req, 'sid'));
-    if (!sess || sess.csrf !== form.get('csrf')) return send(res, 403, 'application/json', '{"error":"csrf"}');
+    if (!sess || sess.csrf !== form.get(V2 ? '_csrf_token' : 'csrf')) return send(res, 403, 'application/json', '{"error":"csrf"}');
     const token = crypto.randomBytes(16).toString('hex');
     tokens.set(token, form.get('username'));
-    return send(res, 200, 'application/json', JSON.stringify({ token }));
+    return send(res, 200, 'application/json', JSON.stringify(V2 ? { access_token: token } : { token }));
   }
   if (path === '/api/me') {
     const name = tokens.get((req.headers.authorization || '').replace(/^Bearer /, ''));
+    if (DRIFT === 'defect' && name) return send(res, 500, 'application/json', '{"error":"internal"}');
     return name ? send(res, 200, 'application/json', JSON.stringify({ name })) : send(res, 401, 'application/json', '{"error":"auth"}');
   }
   if (path === '/promo') return send(res, 200, 'text/html', promoPage, { 'cache-control': 'no-cache' });
