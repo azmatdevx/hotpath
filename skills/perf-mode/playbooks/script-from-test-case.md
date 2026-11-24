@@ -19,7 +19,7 @@ Use when: a journey needs a load test script in any tool (JMeter, k6, Locust, Ga
 4. **Author the script.** Run `script-authoring` with the tool's reference: transactions, think time and pacing from real use, headers, and a structure that is easy to read and change.
 5. **Correlate.** Run `script-correlation`: `har_correlate.py` on the two HARs lists the dynamic values and where each comes from; extract each at its source, substitute it where it is used, and fail loudly if an extraction is empty.
 6. **Parameterize.** Run `script-parameterization`: per-user and per-iteration data, collisions avoided, and the credentials read from the environment or a data file that is not committed.
-7. **Validate.** Run `script-validation`: one user, then a few concurrent users, with content assertions that were shown able to fail. Run it against the build you captured from.
+7. **Validate.** Run `script-validation`: one user, then a few concurrent users, with content assertions that were shown able to fail. Run it against the build you captured from. To show an assertion can fail without breaking the real target, you may point a copy of the script at a local stub that returns the wrong answer; say that it was a stub, and stop it afterwards. Stop every process you started.
 8. **Check for drift.** Re-run step 7 right before delivery. If the application changed since the capture and the script now fails, stop and run `repair-a-script` instead of patching blind.
 9. **Review.** Run `script-review` and fix every blocker and major finding.
 10. **Gate on principles.** Check `principle-validate-before-scale` and `principle-prove-the-work-happened`. If either fails, go back to step 5, 6 or 7.

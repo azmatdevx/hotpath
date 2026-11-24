@@ -50,6 +50,7 @@ Then run the flow with `journey-capture`, and prove `verify` can fail, as `flow-
 The failure bundle already holds an accessibility snapshot taken at the failure. Often that is enough to find the element by meaning. If it is not, reproduce the state with the CLI: open the URL, replay the earlier steps, `snapshot`, and look at what the step needed. Then follow `flow-repair`.
 
 ## Notes
+- `playwright-cli` writes its snapshots and logs into `.playwright-cli/` in the directory you run it from. If that is a repository, keep the folder out of your commit (and out of the diff you hand over) and delete it when you are done.
 - Snapshots and logs go to `.playwright-cli/` in the working directory. They can hold page text, so this repo ignores that folder; do not commit or share it.
 - The CLI's browser is separate from the capture script's browser. A step that works in the CLI still has to be proven in a capture run.
 - Values in a snapshot (field contents, personal data) can end up in your notes. Do not paste them into bugs.

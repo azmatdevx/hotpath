@@ -12,7 +12,7 @@ This skill is agent-neutral. It assumes only that you can read files, edit files
 <!-- hard-rule:start -->
 ## Start here (hard rule)
 
-Before any command or tool call that contacts the target (a reachability check counts), and even when the request already gives these details, write them back in a message of your own first, in this order:
+Before any command or tool call that contacts the target (a reachability check counts), and even when the request already gives these details, write them back in a message of your own first. Begin that message with `Restating:` and give, in this order:
 
 1. **Goal.** The decision the result will inform, and the smallest result that answers it.
 2. **Target.** The exact environment and URL (or the data source, if you are only analysing existing results), and whether it is shared or production.
