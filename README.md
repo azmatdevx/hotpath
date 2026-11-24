@@ -8,7 +8,9 @@ hotpath covers the work of a performance test engineer: scripting and validating
 
 ## Status
 
-Early. The skills are drafts. Tool syntax in `references/` was written without running it, so verify it against the versions you use before relying on it. Issues and pull requests that correct or extend it are welcome.
+Early. The skills are drafts. The k6 scripting syntax in `references/` was run against k6 v1.0.0. The syntax for every other tool (JMeter, Locust, Gatling, Playwright, Puppeteer, the SQL and JVM references) was written without running it, so verify it against the versions you use before relying on it. Issues and pull requests that correct or extend it are welcome.
+
+For an example of the skills applied to a real run, with numbers and limits, see the [demo-shop case study](examples/demo-shop-case-study/README.md). It used a synthetic target on one shared laptop, so treat it as a worked example of the method, not as benchmark data.
 
 ## Quick start
 
