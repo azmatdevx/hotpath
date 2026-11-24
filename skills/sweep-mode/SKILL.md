@@ -29,7 +29,7 @@ Restating:
 - Tool and conditions: ...
 ```
 
-Do it even when it feels redundant: it is how the operator sees, before anything runs, that you read the target the same way they did. Then wait for a correction or a go-ahead only if something in 1 to 4 is unknown or looks wrong. If all four are clear, say so and proceed.
+In Claude Code, `examples/hooks/claude-code` in the hotpath repository enforces this with a hook; where it is installed, restate by running its `restate.py` command. Do it even when it feels redundant: it is how the operator sees, before anything runs, that you read the target the same way they did. Then wait for a correction or a go-ahead only if something in 1 to 4 is unknown or looks wrong. If all four are clear, say so and proceed.
 
 No load, capture, script run, or measurement goes to a target until 2 and 3 are stated. A user's earlier instruction for a different task does not cover this one. Production is never a target unless the user names it for this task.
 <!-- hard-rule:end -->
@@ -79,7 +79,7 @@ No is an acceptable answer. Say when a finding is not supported, when a draft is
 
 ## Shell commands
 
-Where your agent runs commands under an allowlist (many do, and every non-interactive run does), run one command per call. Do not chain commands with `;`, `&&`, `||`, or pipes, do not prefix a command with a variable assignment or `env` (`DIR=... mkdir ...`), and use full paths instead of `cd`. Pass settings as the tool's own flags instead (`k6 run -e NAME=VALUE ...`, `capture-playwright.js --env NAME=VALUE`): the allowlist matches each command by its first word, and one part that is not allowed rejects the whole call. If a command is denied, do not look for another way to do the same thing; report what you needed and why, and stop that step. A denied command is the operator's decision.
+Where your agent runs commands under an allowlist (many do, and every non-interactive run does), run one command per call. Do not chain commands with `;`, `&&`, `||`, or pipes, do not prefix a command with a variable assignment or `env` (`DIR=... mkdir ...`), and use full paths instead of `cd` (run git inside the repository's directory, without `git -C`). Pass settings as the tool's own flags instead (`k6 run -e NAME=VALUE ...`, `capture-playwright.js --env NAME=VALUE`): the allowlist matches each command by its first word, and one part that is not allowed rejects the whole call. If a command is denied, do not look for another way to do the same thing; report what you needed and why, and stop that step. A denied command is the operator's decision.
 
 ## Delegation
 

@@ -69,6 +69,10 @@ def main():
         r2 = subprocess.run([sys.executable, "-I", TOOL, "build", log, "--id", "t", "--test-case", tc,
                              "--expect-text", "Done", "--out", out], capture_output=True, text=True)
         checks["a clean log exits 0 with no warnings"] = r2.returncode == 0 and "WARNING" not in r2.stdout
+        deep = os.path.join(tmp_deep := os.path.join(d, "no", "such", "dir"), "flow.js")
+        r3 = subprocess.run([sys.executable, "-I", TOOL, "build", log, "--id", "t", "--expect-text", "Done", "--out", deep],
+                            capture_output=True, text=True)
+        checks["the output folder is created when it does not exist"] = os.path.exists(deep) and "Traceback" not in r3.stderr
         if shutil.which("node"):
             checks["generated file parses"] = subprocess.run(["node", "--check", out]).returncode == 0
     bad = [k for k, v in checks.items() if not v]

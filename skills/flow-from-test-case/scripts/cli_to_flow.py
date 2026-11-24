@@ -65,6 +65,7 @@ def record(a, cmd):
         if not code:
             sys.exit("the command printed no Playwright code; nothing recorded")
         entry.update(kind="cli", command=" ".join(cmd[1:]), code=code)
+    os.makedirs(os.path.dirname(os.path.abspath(a.log)), exist_ok=True)
     with open(a.log, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry) + "\n")
     print(f"recorded: {a.step}")
@@ -158,6 +159,7 @@ module.exports = {{
   }},
 }};
 """
+    os.makedirs(os.path.dirname(os.path.abspath(a.out)), exist_ok=True)
     open(a.out, "w", encoding="utf-8").write(flow)
     print(f"wrote {a.out} ({len(steps)} steps)")
     for w in warnings:

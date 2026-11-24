@@ -17,7 +17,7 @@ Use when: a script fails validation or in the pipeline (new 401s or 403s, empty 
 3. **Recapture.** Capture the journey twice with the current build (`journey-capture`, bodies recorded, one account each). Keep the HARs out of version control.
 4. **Compare.** Run `har_correlate.py` on the new pair, and compare the transaction list of the new capture against the script's transactions: requests added, removed, or reordered, and values that changed role.
 5. **Update the script minimally.** Change only what the comparison shows: an extraction rule, a request, a parameter. Keep transaction names stable so results stay comparable over time, and say so if you must rename one.
-6. **Prove it.** Run `script-validation`: one user, then a few, with the content assertions that were shown able to fail. Confirm the change fixed the original failure, not another one.
+6. **Prove it.** Run `script-validation`: one user, then a few, with the content assertions that were shown able to fail (make the broken copy of the script with your file-edit tool, not with `sed`, which an allowlist may reject). Confirm the change fixed the original failure, not another one.
 7. **Deliver.** Run the `open-a-pr` playbook with the before and after evidence and a note of what changed in the application.
 
 ## Verification

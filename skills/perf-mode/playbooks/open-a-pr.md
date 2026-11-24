@@ -14,7 +14,7 @@ Use when: a playbook says to deliver, such as `script-from-test-case` or `repair
 
 1. **Check the gates.** The playbook's verification passed and was re-run at this build. If not, go back; do not open a PR to "get review of" unverified work.
 2. **Check the diff for what must not be there:** HAR files, captures, tokens, passwords, personal data, local paths, debug listeners, and files you did not mean to change. Remove them.
-3. **Branch.** Create a new feature branch (for example `perf/<journey>-<change>`) from the default branch. Never commit to the default branch or to a branch someone else owns.
+3. **Branch.** Run git from the repository's own directory (your working directory), not with `git -C` or `cd`: allowlists reject both. Create a new feature branch (for example `perf/<journey>-<change>`) from the default branch. Never commit to the default branch or to a branch someone else owns.
 4. **Commit.** One focused commit per logical change, with a message that says what changed and why.
 5. **Push the new branch.** Never force-push, and never push to a shared or default branch.
 6. **Open the PR as ready for review.** Title `type(scope): subject`. Body of 40 lines or fewer under these headings, dropping empty ones: Why, What changed, Scope, Verification, Not covered, Rollback. Put long evidence (run output, tables) in a file or comment and link it. If you cannot use a PR tool, write the title and body to a file and tell the user.

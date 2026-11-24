@@ -19,4 +19,5 @@ jobs:
       - run: python3 skills/results-analysis/scripts/selftest.py
       - run: python3 skills/observability-analysis/scripts/selftest.py
       - run: python3 skills/sql-workload-analysis/scripts/selftest.py
+      - run: python3 examples/hooks/claude-code/selftest.py
       - run: python3 scripts/test-install.py
