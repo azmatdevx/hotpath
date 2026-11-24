@@ -130,6 +130,25 @@ No search came back empty and every check passed. The queue stayed in single dig
 **Verdict:** sustainable capacity under these SLAs is at least 62/s and below 65/s, within 7% of the arithmetic ceiling of 66.7. I did not test 63 or 64. The earlier suspicion that 65/s would read worse over a longer hold held: it climbed from 490-646 ms in the first minute to about 1.57 s of checkout p95 in the last.
 
 
+## The analysis scripts on the 65/s hold
+
+The analysis scripts were run on one of the 5-minute 65/s holds (raw data not in the repository; the commands work on any k6 `--out csv` file and the server and process samples from the demo):
+
+```sh
+python3 skills/results-analysis/scripts/summarize_results.py h65_1-raw.csv --trim-start 30 --trim-end 5 --series-csv ref.csv --series-bucket 5 --series-label 04_checkout
+python3 skills/observability-analysis/scripts/rank_limiters.py ref.csv server.csv:dbQueue server.csv:dbInUse procs.csv:node_cpu_pct procs.csv:k6_cpu_pct --ceiling dbInUse=8
+```
+The summary was a dozen lines of table instead of a 113 MB file, and is consistent with the 5-minute hold section above: every transaction flagged DRIFTING, checkout p95 rising from 1089 to 1564 ms between the two halves of the window at a constant 64-65 requests per second. The ranking, with the known cause (the 8-slot database pool) not given to it:
+
+| Series | r vs checkout p95 | r vs rate | Reading |
+|---|---|---|---|
+| `dbQueue` | 1.0 | 0.32 | candidate limiter (follows latency, not load) |
+| `dbInUse` | 0.43 | 0.16 | saturated: at its ceiling of 8 for 100% of the window |
+| `node_cpu_pct` | 0.23 | 0.05 | no clear relationship |
+| `k6_cpu_pct` | -0.21 | 0.22 | no clear relationship |
+
+That is the same conclusion as findings 1 and 4, reached in two commands. Two things the demo showed about the scripts: a perfectly flat series (the pool pinned at 8) has no correlation with anything, so the first version dropped it, and the second version reports it as saturated from the declared ceiling instead. And a series that rises with the load while latency also rises with the load is deliberately not called the limiter.
+
 ## Findings
 
 1. **The limiter is the database slot pool.** Slots in use rise to 7.3 of 8 at 60/s and 8.0 at 80/s while the target uses about 5% of a core and k6 at most 22%. Queue wait of about 400 ms per query explains the 80/s latencies: login and cart measured about 400 ms, search (2 queries) about 800 ms, and checkout (4 queries) about 1.6 to 1.8 s.

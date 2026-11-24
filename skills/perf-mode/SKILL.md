@@ -32,6 +32,7 @@ Each trigger is a required action, not a suggestion. Each reply names the princi
 |---|---|
 | You send traffic to any system (a capture, a validation run) | Confirm permission and environment (above), keep it to a handful of users, and validate at one user before more (`principle-validate-before-scale`). Run `load-run-checklist` before anything the pipeline will run at load |
 | You write or change a script | Run `script-validation` with content assertions, and show the assertions can fail |
+| You read run results, logs, or monitoring data | Summarise with the scripts (`summarize_results.py`, `rank_limiters.py`, `rank_statements.py`) and read the summary. Never paste raw results, series, or logs into the conversation |
 | You are about to state a number | Run `results-sanity-check`, report percentiles per transaction, give ranges across runs, and name what limits it (`principle-explain-the-number`, `principle-percentiles-not-averages`) |
 | You claim something worked (a status code, a green run) | Show the evidence that the work happened (`principle-prove-the-work-happened`) |
 | You compare two runs or configurations | Change one thing between them (`principle-one-variable-at-a-time`) |
@@ -109,6 +110,7 @@ Match the task to one playbook, copy its steps into a task list (your agent's to
 | [repair-a-script](playbooks/repair-a-script.md) | A script broke because the application changed: reproduce, classify, recapture, fix, and deliver. |
 | [open-a-pr](playbooks/open-a-pr.md) | Hand verified work to a reviewer as a PR that carries its own evidence. |
 | [design-a-load-test](playbooks/design-a-load-test.md) | Plan a load test, build its scripts, and wire the pipeline that runs it. |
-| [analyse-a-test-run](playbooks/analyse-a-test-run.md) | Vet, analyse, and write up a completed run, naming the limiter. |
+| [analyse-a-test-run](playbooks/analyse-a-test-run.md) | Vet, analyse, and write up a completed run, naming the limiter from monitoring data. |
+| [analyse-slow-sql](playbooks/analyse-slow-sql.md) | Find the SQL statements that cost the most during a run, read their plans, and verify changes. |
 
 Every playbook has the same sections: an ownership preamble, inputs, steps, verification, stop conditions, delegation, a reply format, related playbooks, and what done means. `docs/playbook-template.md` in the repository is the template for new ones.

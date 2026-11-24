@@ -16,4 +16,7 @@ jobs:
       - run: python3 skills/web-vitals-audit/scripts/selftest.py
       - run: python3 skills/script-correlation/scripts/selftest.py
       - run: python3 skills/script-authoring/scripts/selftest.py
+      - run: python3 skills/results-analysis/scripts/selftest.py
+      - run: python3 skills/observability-analysis/scripts/selftest.py
+      - run: python3 skills/sql-workload-analysis/scripts/selftest.py
       - run: python3 scripts/test-install.py

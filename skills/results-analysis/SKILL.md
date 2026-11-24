@@ -17,6 +17,16 @@ Run `results-sanity-check` first, or alongside this. This skill assumes the run 
 
 ## Steps
 
+`<skill-dir>` is the folder containing this SKILL.md; the script is in its `scripts/` folder.
+
+### 0. Summarise first
+For k6 CSV, JMeter CSV results (JTL), or any CSV, let the script do the arithmetic, so you read about thirty lines instead of the raw file (which can be hundreds of megabytes):
+
+```
+python3 <skill-dir>/scripts/summarize_results.py results.csv --trim-start 60 --trim-end 15 --sla-p95 800 --json summary.json --series-csv ref.csv
+```
+It gives percentiles per transaction over the steady-state window, error rates, first-half versus second-half p95 and error rate (with a DRIFTING flag), a coarse time series, failing checks, and dropped iterations for k6. `--window START,END` sets the window explicitly; `--sla LABEL=MS` sets a limit per transaction; `--series-csv` writes a series for `observability-analysis`. It cannot tell whether the generator was saturated or the load matched the plan, so run `results-sanity-check` as well. The steps below say what to do with what it shows.
+
 ### 1. Collect raw data
 Gather the raw per-request samples, not only the tool's summary. Typical sources:
 - JMeter: the results file (`.jtl` or CSV) from `-l`

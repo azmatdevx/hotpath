@@ -48,7 +48,8 @@ Each mode first restates the goal, the target, the permission, and the tool, the
 | `perf-mode/playbooks/repair-a-script` | Fix a script after the application changed. |
 | `perf-mode/playbooks/open-a-pr` | Hand verified work to a reviewer as a PR with evidence. |
 | `perf-mode/playbooks/design-a-load-test` | Plan a load test, build its scripts, and wire the pipeline that runs it. |
-| `perf-mode/playbooks/analyse-a-test-run` | Vet, analyse, and write up a completed run. |
+| `perf-mode/playbooks/analyse-a-test-run` | Vet, analyse, and write up a completed run, naming the limiter. |
+| `perf-mode/playbooks/analyse-slow-sql` | Rank the SQL that cost the most during a run, read the plans, and verify changes. |
 
 ### Journey sweep (sweep-mode)
 
@@ -81,7 +82,9 @@ Each mode first restates the goal, the target, the permission, and the tool, the
 | `load-test-design` | Objectives, SLAs, workload model, test types. |
 | `load-run-checklist` | Before, during, and after a run. |
 | `results-sanity-check` | Nine questions to vet a result before reporting it. |
-| `results-analysis` | Percentiles, curves, errors, and finding the limiter. |
+| `results-analysis` | Percentiles per transaction, drift, errors, and where latency rises, with a summary script for k6 and JMeter results. |
+| `observability-analysis` | Export a run window from Grafana and Prometheus, Datadog, New Relic, Dynatrace, Azure Monitor, or CloudWatch, and rank the series against the latency rise. |
+| `sql-workload-analysis` | The SQL statements that cost the most during a run (PostgreSQL, Oracle, SQL Server, MySQL), ranked from the engine's statistics. |
 | `test-report` | Reporting a result to stakeholders. |
 | `capacity-planning` | Sizing from load test evidence, with headroom and redundancy. |
 | `ci-performance-gates` | Automated performance checks in CI/CD. |

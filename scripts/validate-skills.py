@@ -62,7 +62,7 @@ PLAYBOOK_SECTIONS = ["## Inputs", "## Steps", "## Verification", "## Stop condit
                      "## Reply format", "## Related playbooks", "## Done when"]
 known = {p.name for p in SKILLS.iterdir() if p.is_dir()}
 SKILL_PREFIXES = {"script", "principle", "results", "load", "browser", "flow", "journey", "sweep", "perf", "har",
-                  "web", "repair", "review"}
+                  "web", "repair", "review", "observability", "sql", "analyse"}
 
 
 def block(text, name):
